@@ -1,0 +1,88 @@
+{
+  "realm": "myrealm",
+  "enabled": true,
+  "displayName": "Local Demo Realm",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "permanentLockout": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "demo-user",
+        "description": "Default demo user"
+      },
+      {
+        "name": "demo-admin",
+        "description": "Elevated demo access"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "my-nextjs-client",
+      "name": "Next.js Demo App",
+      "description": "NextAuth client for local demo sign-in",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/api/auth/callback/keycloak",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "baseUrl": "http://localhost:3000",
+      "rootUrl": "http://localhost:3000",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "demo.user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "demo.user@example.com",
+      "realmRoles": [
+        "demo-user"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Demo1234!",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin.user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin.user@example.com",
+      "realmRoles": [
+        "demo-user",
+        "demo-admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin1234!",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

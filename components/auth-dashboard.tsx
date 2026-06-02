@@ -24,6 +24,23 @@ export function AuthDashboard() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
 
+  async function handleSignOut() {
+    const idToken = session?.idToken;
+    const logoutUrl = session?.keycloakLogoutUrl;
+
+    await signOut({ redirect: false, callbackUrl: "/" });
+
+    if (logoutUrl && idToken) {
+      const url = new URL(logoutUrl);
+      url.searchParams.set("id_token_hint", idToken);
+      url.searchParams.set("post_logout_redirect_uri", window.location.origin);
+      window.location.assign(url.toString());
+      return;
+    }
+
+    window.location.assign("/");
+  }
+
   return (
     <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-6xl items-center px-4 py-8 sm:px-6 lg:px-8">
       <section className="grid w-full gap-6 rounded-[2rem] border border-white/10 bg-white/75 p-5 shadow-[0_25px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
@@ -114,7 +131,7 @@ export function AuthDashboard() {
 
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={handleSignOut}
                 className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 Sign out

@@ -6,12 +6,22 @@ const keycloakRealm = process.env.KEYCLOAK_REALM;
 const keycloakClientId = process.env.KEYCLOAK_CLIENT_ID;
 const keycloakClientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
 
-if (
-  !keycloakUrl ||
-  !keycloakRealm ||
-  !keycloakClientId ||
-  !keycloakClientSecret
-) {
+type KeycloakProviderConfig = {
+  clientId: string;
+  clientSecret?: string;
+  issuer: string;
+  authorization: {
+    params: {
+      scope: string;
+    };
+  };
+};
+
+const keycloakProvider = KeycloakProvider as unknown as (
+  config: KeycloakProviderConfig,
+) => ReturnType<typeof KeycloakProvider>;
+
+if (!keycloakUrl || !keycloakRealm || !keycloakClientId) {
   throw new Error(
     "Missing required Keycloak or NextAuth environment variables.",
   );
@@ -19,9 +29,9 @@ if (
 
 export const authOptions: NextAuthOptions = {
   providers: [
-    KeycloakProvider({
+    keycloakProvider({
       clientId: keycloakClientId,
-      clientSecret: keycloakClientSecret,
+      ...(keycloakClientSecret ? { clientSecret: keycloakClientSecret } : {}),
       issuer: `${keycloakUrl}/realms/${keycloakRealm}`,
       authorization: {
         params: {
@@ -39,6 +49,10 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
       }
 
+      if (account?.id_token) {
+        token.idToken = account.id_token;
+      }
+
       if (profile?.sub) {
         token.sub = profile.sub;
       }
@@ -51,6 +65,8 @@ export const authOptions: NextAuthOptions = {
       }
 
       session.accessToken = token.accessToken;
+      session.idToken = token.idToken;
+      session.keycloakLogoutUrl = `${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/logout`;
 
       return session;
     },

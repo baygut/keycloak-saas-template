@@ -29,6 +29,18 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Local Keycloak Demo
+
+The local Keycloak container imports [keycloak/realm-demo.json](keycloak/realm-demo.json) on startup.
+
+Seeded demo accounts:
+
+- `demo.user` / `Demo1234!`
+- `admin.user` / `Admin1234!`
+
+The client expected by the app is `my-nextjs-client` in realm `myrealm`.
+For the local demo, the client is configured as public, so `KEYCLOAK_CLIENT_SECRET` is optional.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
