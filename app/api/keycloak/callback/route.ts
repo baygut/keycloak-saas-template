@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  exchangeKeycloakCode,
-  readKeycloakConfig,
-} from "@/lib/keycloak";
+import { exchangeKeycloakCode, readKeycloakConfig } from "@/lib/keycloak";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

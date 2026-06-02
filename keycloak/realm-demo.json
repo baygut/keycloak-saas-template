@@ -36,9 +36,7 @@
         "http://localhost:3000/api/auth/callback/keycloak",
         "http://localhost:3000/*"
       ],
-      "webOrigins": [
-        "http://localhost:3000"
-      ],
+      "webOrigins": ["http://localhost:3000"],
       "baseUrl": "http://localhost:3000",
       "rootUrl": "http://localhost:3000",
       "attributes": {
@@ -54,9 +52,7 @@
       "firstName": "Demo",
       "lastName": "User",
       "email": "demo.user@example.com",
-      "realmRoles": [
-        "demo-user"
-      ],
+      "realmRoles": ["demo-user"],
       "credentials": [
         {
           "type": "password",
@@ -72,10 +68,7 @@
       "firstName": "Admin",
       "lastName": "User",
       "email": "admin.user@example.com",
-      "realmRoles": [
-        "demo-user",
-        "demo-admin"
-      ],
+      "realmRoles": ["demo-user", "demo-admin"],
       "credentials": [
         {
           "type": "password",
