@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model LogEvent {
+  id        String   @id @default(cuid())
+  ts        DateTime
+  level     String
+  service   String?
+  prefix    String?
+  msg       String
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([ts(sort: Desc)])
+  @@index([level])
+}
+
+model Blog {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  summary    String
+  content    String
+  visibility String   @default("private")
+  ownerKey   String
+  ownerName  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([ownerKey])
+  @@index([visibility])
+}

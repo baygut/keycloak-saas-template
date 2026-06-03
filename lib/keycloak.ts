@@ -37,6 +37,13 @@ export function readKeycloakConfig(): KeycloakConfig {
   };
 }
 
+/** Keycloak Admin Console — Users list for the configured realm. */
+export function getKeycloakAdminConsoleUsersUrl(): string {
+  const { baseUrl, realm } = readKeycloakConfig();
+  const normalizedBase = baseUrl.replace(/\/$/, "");
+  return `${normalizedBase}/admin/master/console/#/${realm}/users`;
+}
+
 export function createKeycloakAuthorizationUrl({
   baseUrl,
   realm,
@@ -59,6 +66,79 @@ export function createKeycloakAuthorizationUrl({
 
   return url;
 }
+
+export function createKeycloakLogoutUrl({
+  baseUrl,
+  realm,
+  clientId,
+  postLogoutRedirectUri,
+  idTokenHint,
+}: KeycloakConfig & {
+  postLogoutRedirectUri: string;
+  idTokenHint?: string;
+}) {
+  const url = new URL(
+    `${baseUrl}/realms/${realm}/protocol/openid-connect/logout`,
+  );
+
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUri);
+
+  if (idTokenHint) {
+    url.searchParams.set("id_token_hint", idTokenHint);
+  }
+
+  return url;
+}
+
+export function createKeycloakRegistrationUrl({
+  baseUrl,
+  realm,
+  clientId,
+  redirectUri,
+  state,
+}: KeycloakConfig & {
+  redirectUri: string;
+  state: string;
+}) {
+  const url = new URL(
+    `${baseUrl}/realms/${realm}/protocol/openid-connect/registrations`,
+  );
+
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", "openid profile email");
+  url.searchParams.set("state", state);
+
+  return url;
+}
+
+export type DecodedIdToken = {
+  sub: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  preferred_username?: string;
+  given_name?: string;
+  family_name?: string;
+  [key: string]: unknown;
+};
+
+export function decodeIdToken(token: string): DecodedIdToken | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = Buffer.from(base64, "base64").toString("utf8");
+    return JSON.parse(jsonPayload) as DecodedIdToken;
+  } catch (error) {
+    console.error("[keycloak-utils] failed to decode ID token", error);
+    return null;
+  }
+}
+
 
 export async function exchangeKeycloakCode({
   baseUrl,

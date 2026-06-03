@@ -1,48 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Keycloak SaaS Template
+
+Next.js 16 app with Keycloak OIDC, centralized RBAC, Prisma SQLite, and server actions.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cp .env.example .env.local
+npm install
+npm run db:push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Keycloak Demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Local realm: [`keycloak/realm-demo.json`](keycloak/realm-demo.json)
 
-## Learn More
+| Account | Password | Roles |
+|---------|----------|-------|
+| `demo.user` | `Demo1234!` | `demo-user` |
+| `admin.user` | `Admin1234!` | `demo-user`, `demo-admin` |
 
-To learn more about Next.js, take a look at the following resources:
+Client: `my-nextjs-client` in realm `myrealm`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Protected resources (`lib/auth/resources.ts`)
 
-## Local Keycloak Demo
+| Resource ID | Routes | Server guard | Client `RoleGuard` |
+|-------------|--------|--------------|-------------------|
+| `user_restricted` | `/dashboard/profile`, `/blog`, `/blog/new`, edit own posts | `requireUserResourceAccess()` | Header profile, “New blog”, blog form public option (admin only) |
+| `admin_restricted` | `/dashboard/logs`, `/dashboard/blogs`, `/dashboard/users` | `requireRole(ROLES.ADMIN)` | Header admin links, sidebar admin section |
 
-The local Keycloak container imports [keycloak/realm-demo.json](keycloak/realm-demo.json) on startup.
+Access denials render [`ForbiddenPanel`](components/dashboard/forbidden-panel.tsx) inline or redirect to `/forbidden`. Denials are logged under the `access` logger prefix and appear in **System logs** for admins.
 
-Seeded demo accounts:
+### Roles (`lib/auth/constants.ts`)
 
-- `demo.user` / `Demo1234!`
-- `admin.user` / `Admin1234!`
+All role strings live in one place. Server guards, server actions, and client `RoleGuard` import `ROLES` from there — never hardcode role names.
 
-The client expected by the app is `my-nextjs-client` in realm `myrealm`.
-For the local demo, the client is configured as public, so `KEYCLOAK_CLIENT_SECRET` is optional.
+### Auth flow
 
-## Deploy on Vercel
+- **Route handlers (OAuth only):** `/api/keycloak/login`, `register`, `callback`
+- **Server actions:** `signOutAction`, blog CRUD, optional `getSessionAction`
+- **Server session:** `getSession()`, `requireSession()`, `requireRole()` in `lib/auth/server.ts`
+- **Client:** Zustand store + `useAuth()` hydrated from root layout (no `/api/auth/me` fetch on load)
+- **Edge proxy:** [`proxy.ts`](proxy.ts) protects `/dashboard`, `/blog`, `/blog/new`, `/blog/:slug/edit`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Blogs (Prisma)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Single SQLite DB (`data/app.sqlite`) for logs and blogs.
+
+| Visibility | Who can view `/blog/[slug]` |
+|------------|----------------------------|
+| `public` | Anyone (no login) |
+| `private` | Owner or `demo-admin` |
+
+Admins see all blogs on `/blog` with visibility badges. Public slugs are pre-rendered at build via `generateStaticParams`.
+
+### Admin user management
+
+`/dashboard/users` (admin only) redirects to the Keycloak Admin Console users page for the configured realm.
+
+### Logger
+
+```ts
+import logger from "@/lib/logger";
+const log = logger.child("my-module");
+log.info("message", { meta });
+```
+
+Console output only in development; all levels persist to `LogEvent` via Prisma.
+
+### SSR / CSR
+
+- Landing page: `force-static`
+- Dashboard: server-fetched user/admin data; admin panel lazy-loaded with `next/dynamic` (`ssr: false`)
+- Blog detail: server access check; public posts in `generateStaticParams`
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server |
+| `npm run build` | Prisma generate + production build |
+| `npm run db:push` | Apply Prisma schema |
+| `npm run db:studio` | Prisma Studio |
+
+## Assignment mapping
+
+See [`docs/task.md`](docs/task.md) for the full brief. This template covers Keycloak auth, BFF/server-side authorization, `admin_restricted` / `user_restricted` dashboard resources, structured logging, and SSR optimizations.
