@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { AuthProvider, AuthRefresher } from "@/components/auth/auth-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { getSafeSessionUser, getSession } from "@/lib/auth/server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,12 +26,22 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  const initialUser = session ? getSafeSessionUser(session) : null;
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full items-center justify-center flex flex-col">
+        <AuthProvider initialUser={initialUser}>
+          <TooltipProvider>
+            <AuthRefresher />
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
