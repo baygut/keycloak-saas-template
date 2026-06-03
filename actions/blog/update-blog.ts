@@ -31,7 +31,7 @@ export async function updateBlogAction(
       return { ok: false, error: "Blog not found", code: "NOT_FOUND" };
     }
 
-    if (!canManageBlog(existing, session)) {
+    if (!(await canManageBlog(existing, session))) {
       return { ok: false, error: "Forbidden", code: "FORBIDDEN" };
     }
 

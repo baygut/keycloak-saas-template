@@ -15,6 +15,13 @@ export default async function BlogIndexPage() {
   const blogs = await listBlogsForViewer(session);
   const principal = getSessionPrincipal(session);
 
+  const blogsWithEdit = await Promise.all(
+    blogs.map(async (blog) => ({
+      blog,
+      canEdit: await canManageBlog(blog, session),
+    })),
+  );
+
   return (
     <div className="container py-8 space-y-8">
       <Card>
@@ -41,10 +48,7 @@ export default async function BlogIndexPage() {
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          {blogs.map((blog) => {
-            const canEdit = canManageBlog(blog, session);
-
-            return (
+          {blogsWithEdit.map(({ blog, canEdit }) => (
               <Card key={blog.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
@@ -75,8 +79,7 @@ export default async function BlogIndexPage() {
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
+          ))}
         </div>
       )}
     </div>

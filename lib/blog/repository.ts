@@ -4,6 +4,12 @@ import { getSessionPrincipal, isAdmin } from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/auth/types";
 import type { BlogRecord } from "@/lib/blog/access";
 import { appendSlugSuffix, slugifyTitle } from "@/lib/blog/slug";
+import {
+  deleteBlogTuples,
+  listSharedBlogIds,
+  writeBlogOwnerTuple,
+} from "@/lib/authz/blog";
+import { isOpenFgaConfigured } from "@/lib/openfga";
 import { prisma } from "@/lib/prisma";
 
 export type BlogInput = {
@@ -64,14 +70,24 @@ export async function ensureUniqueSlug(base: string): Promise<string> {
 export async function listBlogsForViewer(
   session: SessionUser,
 ): Promise<BlogRecord[]> {
-  const rows = isAdmin(session)
-    ? await prisma.blog.findMany({
-        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      })
-    : await prisma.blog.findMany({
-        where: { ownerKey: getSessionPrincipal(session) },
-        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      });
+  if (isAdmin(session)) {
+    const rows = await prisma.blog.findMany({
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+    return rows.map(mapBlog);
+  }
+
+  const principal = getSessionPrincipal(session);
+  const sharedIds = isOpenFgaConfigured()
+    ? await listSharedBlogIds(principal)
+    : [];
+
+  const rows = await prisma.blog.findMany({
+    where: {
+      OR: [{ ownerKey: principal }, { id: { in: sharedIds } }],
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+  });
 
   return rows.map(mapBlog);
 }
@@ -102,6 +118,8 @@ export async function createBlog(
     },
   });
 
+  await writeBlogOwnerTuple(ownerKey, row.id);
+
   return mapBlog(row);
 }
 
@@ -131,6 +149,16 @@ export async function updateBlog(
 
 export async function deleteBlogBySlug(slug: string): Promise<boolean> {
   try {
+    const existing = await prisma.blog.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return false;
+    }
+
+    await deleteBlogTuples(existing.id);
     await prisma.blog.delete({ where: { slug } });
     return true;
   } catch {

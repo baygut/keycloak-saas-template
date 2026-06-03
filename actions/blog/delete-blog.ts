@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/server";
 import type { ActionResult } from "@/lib/auth/types";
-import { canManageBlog } from "@/lib/blog/access";
+import { canDeleteBlog } from "@/lib/blog/access";
 import { deleteBlogBySlug, getBlogBySlug } from "@/lib/blog/repository";
 import logger from "@/lib/logger";
 
@@ -21,7 +21,7 @@ export async function deleteBlogAction(
       return { ok: false, error: "Blog not found", code: "NOT_FOUND" };
     }
 
-    if (!canManageBlog(existing, session)) {
+    if (!(await canDeleteBlog(existing, session))) {
       return { ok: false, error: "Forbidden", code: "FORBIDDEN" };
     }
 

@@ -13,7 +13,7 @@ import { BlogDeleteButton } from "@/components/blog-delete-button";
 import { VisibilityBadge } from "@/components/blog/visibility-badge";
 import { accessDeniedPanel } from "@/lib/auth/forbidden-response";
 import { getSession } from "@/lib/auth/server";
-import { canManageBlog, canViewBlog } from "@/lib/blog/access";
+import { canDeleteBlog, canManageBlog, canViewBlog } from "@/lib/blog/access";
 import { getBlogBySlug } from "@/lib/blog/repository";
 import { formatDate } from "@/lib/format";
 
@@ -44,7 +44,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     notFound();
   }
 
-  if (!canViewBlog(blog, session)) {
+  if (!(await canViewBlog(blog, session))) {
     return accessDeniedPanel({
       session,
       message: "You do not have permission to view this blog post.",
@@ -56,7 +56,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     });
   }
 
-  const canEdit = session ? canManageBlog(blog, session) : false;
+  const canEdit = session ? await canManageBlog(blog, session) : false;
+  const canDelete = session ? await canDeleteBlog(blog, session) : false;
 
   return (
     <div className="container max-w-3xl py-8">
@@ -92,13 +93,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             <Link href="/blog">← Back to blogs</Link>
           </Button>
           {canEdit ? (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href={`/blog/${blog.slug}/edit`}>Edit</Link>
-              </Button>
-              <BlogDeleteButton slug={blog.slug} />
-            </>
+            <Button variant="ghost" asChild>
+              <Link href={`/blog/${blog.slug}/edit`}>Edit</Link>
+            </Button>
           ) : null}
+          {canDelete ? <BlogDeleteButton slug={blog.slug} /> : null}
         </CardFooter>
       </Card>
     </div>

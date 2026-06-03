@@ -1,0 +1,15 @@
+model
+  schema 1.1
+
+type user
+
+type blog
+  relations
+    define owner: [user]
+    define viewer: [user] or editor or admin or owner
+    define editor: [user] or admin or owner
+    define admin: [user] or owner
+    define can_view: viewer
+    define can_edit: editor
+    define can_delete: owner or admin
+    define can_share: admin or owner
