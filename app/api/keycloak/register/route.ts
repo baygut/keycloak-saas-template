@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createKeycloakRegistrationUrl,
   readKeycloakConfig,
-} from "@/lib/keycloak";
+} from "@/lib/keycloak/keycloak";
 
 export function GET(request: NextRequest) {
   const config = readKeycloakConfig();

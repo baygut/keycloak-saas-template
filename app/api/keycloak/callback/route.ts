@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-import { exchangeKeycloakCode, readKeycloakConfig, decodeIdToken } from "@/lib/keycloak";
+import {
+  exchangeKeycloakCode,
+  readKeycloakConfig,
+  decodeIdToken,
+} from "@/lib/keycloak/keycloak";
 import {
   clearPostLoginRedirectCookie,
   sanitizePostLoginPath,
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
         query,
       },
       { status: 400 },
-      );
+    );
   }
 
   const code = url.searchParams.get("code");
@@ -77,9 +81,11 @@ export async function GET(request: NextRequest) {
         ok: false,
         stage: "token-exchange",
         error: tokenResponse.payload.error || "Token exchange failed",
-        errorDescription: tokenResponse.payload.error_description || "Invalid credentials or code",
+        errorDescription:
+          tokenResponse.payload.error_description ||
+          "Invalid credentials or code",
       },
-      { status: tokenResponse.status || 400 }
+      { status: tokenResponse.status || 400 },
     );
   }
 
@@ -92,7 +98,7 @@ export async function GET(request: NextRequest) {
         stage: "token-decoding",
         error: "Failed to decode ID token",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -101,7 +107,8 @@ export async function GET(request: NextRequest) {
     ? decodeIdToken(tokenResponse.payload.access_token)
     : null;
 
-  const roles = (decodedAccess?.realm_access as { roles?: string[] })?.roles || [];
+  const roles =
+    (decodedAccess?.realm_access as { roles?: string[] })?.roles || [];
 
   const sessionData = {
     name: decoded.name || decoded.preferred_username || "User",
@@ -131,4 +138,3 @@ export async function GET(request: NextRequest) {
   const destination = postLoginPath ?? "/";
   return NextResponse.redirect(new URL(destination, request.url));
 }
-

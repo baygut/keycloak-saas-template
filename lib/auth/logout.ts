@@ -2,7 +2,10 @@ import { cookies, headers } from "next/headers";
 
 import { AUTH_PATHS, ID_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { clearAuthCookies } from "@/lib/auth/cookies";
-import { createKeycloakLogoutUrl, readKeycloakConfig } from "@/lib/keycloak";
+import {
+  createKeycloakLogoutUrl,
+  readKeycloakConfig,
+} from "@/lib/keycloak/keycloak";
 import logger from "@/lib/logger";
 
 const log = logger.child("logout");

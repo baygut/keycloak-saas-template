@@ -5,7 +5,7 @@ import { setPostLoginRedirectCookie } from "@/lib/auth/cookies";
 import {
   createKeycloakAuthorizationUrl,
   readKeycloakConfig,
-} from "@/lib/keycloak";
+} from "@/lib/keycloak/keycloak";
 
 export async function GET(request: NextRequest) {
   const config = readKeycloakConfig();
