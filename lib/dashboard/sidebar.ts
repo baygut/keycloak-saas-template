@@ -40,6 +40,12 @@ export function getDashboardSidebarConfig(
       icon: "user",
       resource: PROTECTED_RESOURCES.USER,
     },
+    {
+      href: "/blog",
+      label: "My Blogs",
+      icon: "blogs",
+      resource: PROTECTED_RESOURCES.USER,
+    },
   ];
 
   if (isAdmin(session)) {

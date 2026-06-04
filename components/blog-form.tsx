@@ -117,7 +117,7 @@ export function BlogForm({
             <span className="space-y-1">
               <span className="block text-sm font-medium">Private</span>
               <span className="block text-xs text-muted-foreground">
-                Only you and admins can view this post.
+                Only you, people you share with, and admins can view this post.
               </span>
             </span>
           </label>

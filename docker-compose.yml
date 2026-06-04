@@ -1,12 +1,38 @@
 services:
-  keycloak:
-    image: quay.io/keycloak/keycloak:latest
-    container_name: keycloak
+  postgres:
+    image: postgres:17
+    container_name: postgres
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-    command: ["start-dev", "--import-realm"]
-    volumes:
-      - ./keycloak:/opt/keycloak/data/import
+      POSTGRES_DB: authz
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "8080:8080"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  openfga-migrate:
+    image: openfga/openfga:latest
+    container_name: openfga-migrate
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres:5432/authz?sslmode=disable
+    depends_on:
+      - postgres
+
+  openfga:
+    image: openfga/openfga:latest
+    container_name: openfga
+    command: run
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://postgres:postgres@postgres:5432/authz?sslmode=disable
+
+    depends_on:
+      - openfga-migrate
+    ports:
+      - "8081:8080"
+
+volumes:
+  postgres_data:

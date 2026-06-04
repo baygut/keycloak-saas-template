@@ -54,7 +54,9 @@ Single SQLite DB (`data/app.sqlite`) for logs and blogs.
 | Visibility | Who can view `/blog/[slug]` |
 |------------|----------------------------|
 | `public` | Anyone (no login) |
-| `private` | Owner or `demo-admin` |
+| `private` | Owner, users granted access via OpenFGA, or `demo-admin` |
+
+**OpenFGA:** Private posts support per-user **viewer / editor / admin** sharing from the edit page. See [`docs/openfga.md`](docs/openfga.md). Run `docker compose up -d` and `npm run openfga:bootstrap` before using sharing.
 
 Admins see all blogs on `/blog` with visibility badges. Public slugs are pre-rendered at build via `generateStaticParams`.
 
@@ -86,6 +88,7 @@ Console output only in development; all levels persist to `LogEvent` via Prisma.
 | `npm run build` | Prisma generate + production build |
 | `npm run db:push` | Apply Prisma schema |
 | `npm run db:studio` | Prisma Studio |
+| `npm run openfga:bootstrap` | Create OpenFGA store, model, and backfill owner tuples |
 
 ## Assignment mapping
 

@@ -14,7 +14,8 @@ import { notFound } from "next/navigation";
 
 import { accessDeniedPanel } from "@/lib/auth/forbidden-response";
 import { requireUserResourceAccess } from "@/lib/auth/server";
-import { canManageBlog } from "@/lib/blog/access";
+import { BlogSharePanel } from "@/components/blog/blog-share-panel";
+import { canManageBlog, canShareBlog } from "@/lib/blog/access";
 import { getBlogBySlug } from "@/lib/blog/repository";
 
 type EditBlogPageProps = {
@@ -30,7 +31,7 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
     notFound();
   }
 
-  if (!canManageBlog(blog, session)) {
+  if (!(await canManageBlog(blog, session))) {
     return accessDeniedPanel({
       session,
       message: "You do not have permission to edit this blog post.",
@@ -46,6 +47,8 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
     blog.visibility === BLOG_VISIBILITY.PUBLIC
       ? BLOG_VISIBILITY.PUBLIC
       : BLOG_VISIBILITY.PRIVATE;
+
+  const canManageSharing = await canShareBlog(blog, session);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -74,6 +77,10 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
           />
         </CardContent>
       </Card>
+
+      {canManageSharing ? (
+        <BlogSharePanel slug={blog.slug} ownerKey={blog.ownerKey} />
+      ) : null}
     </div>
   );
 }
