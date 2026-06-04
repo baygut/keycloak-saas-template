@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROLES } from "@/lib/auth/constants";
 import { PROTECTED_RESOURCES } from "@/lib/auth/resources";
 import { requireRole } from "@/lib/auth/server";
+import { ErrorBoundary } from "@/components/core/error-boundary";
 
 export default async function AdminLogsPage() {
   await requireRole(ROLES.ADMIN);
@@ -25,7 +26,9 @@ export default async function AdminLogsPage() {
       </div>
 
       <Suspense fallback={<AdminLogsSkeleton />}>
-        <AdminLogsSection />
+        <ErrorBoundary>
+          <AdminLogsSection />
+        </ErrorBoundary>
       </Suspense>
     </div>
   );
