@@ -1,8 +1,17 @@
 import { ResourceBadge } from "@/components/auth/resource-badge";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PROTECTED_RESOURCES } from "@/lib/auth/resources";
-import { getSafeSessionUser, requireUserResourceAccess } from "@/lib/auth/server";
+import {
+  getSafeSessionUser,
+  requireUserResourceAccess,
+} from "@/lib/auth/server";
 
 export default async function ProfilePage() {
   const session = await requireUserResourceAccess();
@@ -14,8 +23,9 @@ export default async function ProfilePage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
           <p className="text-sm text-muted-foreground">
-            User-restricted resource — requires the <code className="text-xs">demo-user</code> or{" "}
-            <code className="text-xs">demo-admin</code> role.
+            User-restricted resource — requires the{" "}
+            <code className="text-xs">user</code> or{" "}
+            <code className="text-xs">admin</code> role.
           </p>
         </div>
         <ResourceBadge resource={PROTECTED_RESOURCES.USER} />

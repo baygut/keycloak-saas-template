@@ -56,7 +56,9 @@ export function parseSessionCookie(value?: string | null): SessionUser | null {
       username:
         typeof parsed.username === "string" ? parsed.username : undefined,
       roles: Array.isArray(parsed.roles)
-        ? parsed.roles.filter((role): role is string => typeof role === "string")
+        ? parsed.roles.filter(
+            (role): role is string => typeof role === "string",
+          )
         : [],
       sub: parsed.sub,
     };
@@ -121,7 +123,7 @@ export async function requireUserResourceAccess(): Promise<SessionUser> {
 
   if (!canAccessUserResource(session)) {
     deny(session, {
-      reason: "user_restricted resource requires demo-user or demo-admin role",
+      reason: "user_restricted resource requires user or admin role",
       resource: PROTECTED_RESOURCES.USER,
       requiredRoles: [...ROLE_GROUPS.USER_ACCESS],
       route,

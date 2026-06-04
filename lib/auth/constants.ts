@@ -1,7 +1,7 @@
 /** Keycloak realm role names (must match keycloak/realm-demo.json) */
 export const ROLES = {
-  USER: "demo-user",
-  ADMIN: "demo-admin",
+  USER: "user",
+  ADMIN: "admin",
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];

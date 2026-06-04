@@ -3,4 +3,13 @@ export async function register() {
     const { prisma } = await import("@/lib/prisma");
     await prisma.$connect();
   }
+
+  // In production, override console methods to prevent logging sensitive information.
+  // if (!__DEV__) {
+  //   console.log = () => {};
+  //   console.debug = () => {};
+  //   console.info = () => {};
+  //   console.warn = () => {};
+  //   console.error = () => {};
+  // }
 }

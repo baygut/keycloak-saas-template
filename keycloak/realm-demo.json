@@ -12,11 +12,11 @@
   "roles": {
     "realm": [
       {
-        "name": "demo-user",
+        "name": "user",
         "description": "Default demo user"
       },
       {
-        "name": "demo-admin",
+        "name": "admin",
         "description": "Elevated demo access"
       }
     ]
@@ -52,11 +52,27 @@
       "firstName": "Demo",
       "lastName": "User",
       "email": "demo.user@example.com",
-      "realmRoles": ["demo-user"],
+      "realmRoles": ["user"],
       "credentials": [
         {
           "type": "password",
-          "value": "Demo1234!",
+          "value": "123123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "demo.user2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "demo.user2@example.com",
+      "realmRoles": ["user"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123123",
           "temporary": false
         }
       ]
@@ -68,11 +84,11 @@
       "firstName": "Admin",
       "lastName": "User",
       "email": "admin.user@example.com",
-      "realmRoles": ["demo-user", "demo-admin"],
+      "realmRoles": ["user", "admin"],
       "credentials": [
         {
           "type": "password",
-          "value": "Admin1234!",
+          "value": "123123",
           "temporary": false
         }
       ]

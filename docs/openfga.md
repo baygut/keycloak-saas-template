@@ -1,24 +1,24 @@
 # OpenFGA integration
 
-Fine-grained blog access is enforced server-side via OpenFGA. Keycloak still handles authentication and coarse roles (`demo-user`, `demo-admin`).
+Fine-grained blog access is enforced server-side via OpenFGA. Keycloak still handles authentication and coarse roles (`user`, `admin`).
 
 ## Authorization model
 
 See [`fga/model.fga`](../fga/model.fga). Each blog is `blog:{id}` with relations:
 
-| Relation | Meaning |
-|----------|---------|
-| `owner` | Creator (written on blog create) |
-| `viewer` | Can view private posts |
-| `editor` | Can view and edit |
-| `admin` | Can view, edit, and manage sharing |
+| Relation | Meaning                            |
+| -------- | ---------------------------------- |
+| `owner`  | Creator (written on blog create)   |
+| `viewer` | Can view private posts             |
+| `editor` | Can view and edit                  |
+| `admin`  | Can view, edit, and manage sharing |
 
 Computed permissions: `can_view`, `can_edit`, `can_delete`, `can_share`.
 
 **Decision order** (in `lib/blog/access.ts`):
 
 1. `public` visibility → allow view
-2. Keycloak `demo-admin` → allow (app override)
+2. Keycloak `admin` → allow (app override)
 3. SQLite `ownerKey` match → allow owner operations
 4. OpenFGA check → authoritative for shared access
 5. Otherwise deny
@@ -46,9 +46,9 @@ User ids in OpenFGA match `getSessionPrincipal()` (`username`, else `email`, els
 
 ## Code layout
 
-| Path | Role |
-|------|------|
-| `lib/openfga.ts` | SDK client |
-| `lib/authz/can.ts` | `can(user, relation, object)` |
-| `lib/authz/blog.ts` | Blog tuples, grants, collaborators |
-| `actions/blog/share-blog.ts` | Server actions for share UI |
+| Path                         | Role                               |
+| ---------------------------- | ---------------------------------- |
+| `lib/openfga.ts`             | SDK client                         |
+| `lib/authz/can.ts`           | `can(user, relation, object)`      |
+| `lib/authz/blog.ts`          | Blog tuples, grants, collaborators |
+| `actions/blog/share-blog.ts` | Server actions for share UI        |
