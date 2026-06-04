@@ -60,7 +60,6 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
   const [loading, setLoading] = useState(true);
 
   const refreshShares = useCallback(async () => {
-    setLoading(true);
     const result = await listBlogSharesAction(slug);
     setLoading(false);
 
@@ -73,6 +72,7 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
   }, [slug]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshShares();
   }, [refreshShares]);
 

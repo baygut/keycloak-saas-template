@@ -39,6 +39,45 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // 1. Admin-only routes
+  const isAdminRoute =
+    pathname.startsWith("/dashboard/users") ||
+    pathname.startsWith("/dashboard/blogs") ||
+    pathname.startsWith("/dashboard/logs");
+
+  if (isAdminRoute) {
+    const hasAdmin = session.roles.includes("admin");
+    if (!hasAdmin) {
+      const forbiddenUrl = new URL("/forbidden", request.url);
+      forbiddenUrl.searchParams.set("message", "missing required role");
+      forbiddenUrl.searchParams.set("required", "admin");
+      if (session.roles.length) {
+        forbiddenUrl.searchParams.set("roles", session.roles.join(","));
+      }
+      forbiddenUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(forbiddenUrl);
+    }
+  }
+
+  // 2. User-restricted routes (profile, blogs access)
+  const isUserRestrictedRoute =
+    pathname.startsWith("/dashboard/profile") ||
+    isProtectedBlogPath(pathname);
+
+  if (isUserRestrictedRoute) {
+    const hasUserAccess = session.roles.includes("user") || session.roles.includes("admin");
+    if (!hasUserAccess) {
+      const forbiddenUrl = new URL("/forbidden", request.url);
+      forbiddenUrl.searchParams.set("message", "user_restricted resource requires user or admin role");
+      forbiddenUrl.searchParams.set("required", "user,admin");
+      if (session.roles.length) {
+        forbiddenUrl.searchParams.set("roles", session.roles.join(","));
+      }
+      forbiddenUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(forbiddenUrl);
+    }
+  }
+
   const response = NextResponse.next();
   response.headers.set("x-pathname", pathname);
   return response;

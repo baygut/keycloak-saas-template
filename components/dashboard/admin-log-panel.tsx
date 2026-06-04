@@ -6,16 +6,21 @@ type AdminLogPanelProps = {
   fullPage?: boolean;
 };
 
-export function AdminLogPanel({ events, fullPage = false }: AdminLogPanelProps) {
+export function AdminLogPanel({
+  events,
+  fullPage = false,
+}: AdminLogPanelProps) {
   return (
     <div className="flex flex-col gap-3">
       {!fullPage ? (
-        <span className="text-[10px] text-slate-500 uppercase">system_event_logs</span>
+        <span className="text-[10px] text-slate-500 uppercase">
+          system_event_logs
+        </span>
       ) : null}
       <div
         className={cn(
           "flex flex-col gap-2 overflow-y-auto",
-          fullPage ? "max-h-[min(70vh,48rem)]" : "max-h-[220px]",
+          fullPage ? "max-h-[min(70vh,48rem)]" : "max-h-55",
         )}
       >
         {events.length === 0 ? (
@@ -46,7 +51,9 @@ export function AdminLogPanel({ events, fullPage = false }: AdminLogPanelProps) 
                   {event.prefix ? (
                     <span className="text-slate-500">[{event.prefix}] </span>
                   ) : null}
-                  <span className="break-words text-slate-300">{event.message}</span>
+                  <span className="break-words text-slate-300">
+                    {event.message}
+                  </span>
                 </div>
                 <span className="shrink-0 text-[10px] text-slate-600">
                   {new Date(event.time).toLocaleString()}
