@@ -76,11 +76,10 @@ describe("proxy — unauthenticated access", () => {
     expect(response.headers.get("location")).toContain("next=%2Fdashboard%2Flogs");
   });
 
-  it("redirects to login for /blog", async () => {
+  it("allows unauthenticated access to /blog (public listing)", async () => {
     vi.mocked(parseSessionCookie).mockReturnValue(null);
     const response = await proxy(req("/blog"));
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toContain("/api/keycloak/login");
+    expect(response.status).toBe(200);
   });
 
   it("redirects to login for /blog/new", async () => {
