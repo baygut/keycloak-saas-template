@@ -1,4 +1,5 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import { BlogForm } from "@/components/blog-form";
 import { Button } from "@/components/ui/button";
@@ -9,14 +10,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BLOG_VISIBILITY, type BlogVisibility } from "@/lib/auth/constants";
 import { notFound } from "next/navigation";
 
 import { accessDeniedPanel } from "@/lib/auth/forbidden-response";
 import { requireUserResourceAccess } from "@/lib/auth/server";
-import { BlogSharePanel } from "@/components/blog/blog-share-panel";
 import { canManageBlog, canShareBlog } from "@/lib/blog/access";
 import { getBlogBySlug } from "@/lib/blog/repository";
+
+const BlogSharePanel = dynamic(
+  () =>
+    import("@/components/blog/blog-share-panel").then(
+      (mod) => mod.BlogSharePanel,
+    ),
+  { loading: () => <Skeleton className="h-48 w-full rounded-xl" /> },
+);
 
 type EditBlogPageProps = {
   params: Promise<{ slug: string }>;

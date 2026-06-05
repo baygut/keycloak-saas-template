@@ -64,6 +64,7 @@ describe("createKeycloakAuthorizationUrl", () => {
       clientId: "my-nextjs-client",
       redirectUri: "https://app/callback",
       state: "abc123",
+      nonce: "nonce123",
     });
 
     expect(url.toString()).toContain(

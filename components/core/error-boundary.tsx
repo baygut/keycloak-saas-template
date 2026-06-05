@@ -1,8 +1,9 @@
 "use client";
 
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { logClientError } from "@/actions/log-error";
 
 interface Props {
   children?: ReactNode;
@@ -25,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    void logClientError(error.message, errorInfo.componentStack ?? undefined);
   }
 
   private handleReset = () => {
