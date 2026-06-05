@@ -1,12 +1,12 @@
 # Project Overview
 
-| Area | Technology | Notes |
-|------|-----------|-------|
-| Authentication | Keycloak (OIDC) | Realm imported via JSON on compose up |
-| Session | Encrypted httpOnly cookies | Server-side only; token refresh built-in |
-| Data | SQLite + Prisma | Simple setup; Postgres is a future option |
-| Authorization | OpenFGA | Permanent + temporary access |
-| Observability | Structured logs, analytics, OpenTelemetry | All stored in SQLite |
+| Area           | Technology                                | Notes                                     |
+| -------------- | ----------------------------------------- | ----------------------------------------- |
+| Authentication | Keycloak (OIDC)                           | Realm imported via JSON on compose up     |
+| Session        | Encrypted httpOnly cookies                | Server-side only; token refresh built-in  |
+| Data           | SQLite + Prisma                           | Simple setup; Postgres is a future option |
+| Authorization  | OpenFGA                                   | Permanent + temporary access              |
+| Observability  | Structured logs, analytics, OpenTelemetry | All stored in SQLite                      |
 
 ---
 
@@ -49,10 +49,10 @@ When I finish integration for permanent access control, I also implement tempora
 
 While completing the features I also implement some observability features.
 
-| Feature | Model | Where it shows |
-|---------|-------|----------------|
-| Structured logs | `LogEvent` | Dashboard → Logs |
-| Analytics events | `AnalyticsEvent` | Dashboard → Analytics |
-| OpenTelemetry spans | `OtelSpan` | Dashboard → Analytics |
+| Feature             | Model            | Where it shows        |
+| ------------------- | ---------------- | --------------------- |
+| Structured logs     | `LogEvent`       | Dashboard → Logs      |
+| Analytics events    | `AnalyticsEvent` | Dashboard → Analytics |
+| OpenTelemetry spans | `OtelSpan`       | Dashboard → Analytics |
 
 Then I create some pages in the dashboard to display logs and analytics data. For better observability I also set up OpenTelemetry and store spans in the database. This way I can have better insights into the performance of the app and identify any bottlenecks or issues.

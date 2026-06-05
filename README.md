@@ -33,6 +33,16 @@ When done:
 | Keycloak admin | http://localhost:8080 — `admin` / `admin` |
 | OpenFGA | http://localhost:8081 |
 
+Once the app is running you can find the documentation as live blog posts:
+
+| Post | URL |
+|------|-----|
+| Welcome & quick start | http://localhost:3000/blog/welcome |
+| SSR / CSR optimization | http://localhost:3000/blog/ssr-csr-optimization |
+| Keycloak auth model | http://localhost:3000/blog/keycloak-auth-model |
+| Observability & error handling | http://localhost:3000/blog/observability-and-error-handling |
+| Assumptions & trade-offs | http://localhost:3000/blog/assumptions-and-trade-offs |
+
 ### Demo accounts (password: `123123`)
 
 | Username | Role |
