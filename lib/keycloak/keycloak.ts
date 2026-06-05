@@ -50,9 +50,11 @@ export function createKeycloakAuthorizationUrl({
   clientId,
   redirectUri,
   state,
+  nonce,
 }: KeycloakConfig & {
   redirectUri: string;
   state: string;
+  nonce: string;
 }) {
   const url = new URL(
     `${baseUrl}/realms/${realm}/protocol/openid-connect/auth`,
@@ -63,6 +65,7 @@ export function createKeycloakAuthorizationUrl({
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", "openid profile email");
   url.searchParams.set("state", state);
+  url.searchParams.set("nonce", nonce);
 
   return url;
 }
@@ -122,23 +125,82 @@ export type DecodedIdToken = {
   preferred_username?: string;
   given_name?: string;
   family_name?: string;
+  nonce?: string;
   [key: string]: unknown;
 };
 
-export function decodeIdToken(token: string): DecodedIdToken | null {
+export type DecodedAccessToken = {
+  sub: string;
+  realm_access?: { roles?: string[] };
+  resource_access?: Record<string, { roles?: string[] }>;
+  preferred_username?: string;
+  nonce?: string;
+  [key: string]: unknown;
+};
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = Buffer.from(base64, "base64").toString("utf8");
-    return JSON.parse(jsonPayload) as DecodedIdToken;
-  } catch (error) {
-    console.error("[keycloak-utils] failed to decode ID token", error);
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(Buffer.from(base64, "base64").toString("utf8")) as Record<string, unknown>;
+  } catch {
     return null;
   }
 }
 
+export function decodeIdToken(token: string): DecodedIdToken | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    console.error("[keycloak-utils] failed to decode ID token");
+    return null;
+  }
+  return payload as DecodedIdToken;
+}
+
+export function decodeAccessToken(token: string): DecodedAccessToken | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    return null;
+  }
+  return payload as DecodedAccessToken;
+}
+
+
+export async function refreshKeycloakToken({
+  baseUrl,
+  realm,
+  clientId,
+  clientSecret,
+  refreshToken,
+}: KeycloakConfig & { refreshToken: string }) {
+  const tokenEndpoint = `${baseUrl}/realms/${realm}/protocol/openid-connect/token`;
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    client_id: clientId,
+    refresh_token: refreshToken,
+  });
+
+  if (clientSecret) {
+    body.set("client_secret", clientSecret);
+  }
+
+  const response = await fetch(tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as KeycloakTokenResponse;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    tokenEndpoint,
+    payload,
+  };
+}
 
 export async function exchangeKeycloakCode({
   baseUrl,

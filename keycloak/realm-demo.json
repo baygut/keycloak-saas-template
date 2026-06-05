@@ -2,7 +2,7 @@
   "realm": "myrealm",
   "enabled": true,
   "displayName": "Local Demo Realm",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
@@ -68,6 +68,38 @@
       "firstName": "Demo",
       "lastName": "User",
       "email": "demo.user2@example.com",
+      "realmRoles": ["user"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "keymate",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Keymate",
+      "lastName": "User",
+      "email": "keymate@keymate.com",
+      "realmRoles": ["user"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "baygut",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Berkay",
+      "lastName": "Baygut",
+      "email": "info@berkaybaygut.com",
       "realmRoles": ["user"],
       "credentials": [
         {

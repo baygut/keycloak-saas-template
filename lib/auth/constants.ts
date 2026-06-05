@@ -23,6 +23,16 @@ export const SESSION_COOKIE = "session_token";
 export const ID_TOKEN_COOKIE = "kc_id_token";
 /** Short-lived post-login redirect target (from ?next= on login). */
 export const POST_LOGIN_REDIRECT_COOKIE = "auth_next";
+/** CSRF protection: OAuth2 state parameter stored before redirect to Keycloak. */
+export const OAUTH_STATE_COOKIE = "oauth_state";
+/** OIDC nonce stored before redirect to Keycloak, validated on callback. */
+export const OAUTH_NONCE_COOKIE = "oauth_nonce";
+/** HttpOnly cookie holding the raw access token (BFF use only). */
+export const ACCESS_TOKEN_COOKIE = "access_token";
+/** HttpOnly cookie holding the refresh token (BFF use only). */
+export const REFRESH_TOKEN_COOKIE = "refresh_token";
+/** HttpOnly cookie holding access token expiry as a Unix timestamp (seconds). */
+export const ACCESS_TOKEN_EXP_COOKIE = "access_token_exp";
 
 export const BLOG_VISIBILITY = {
   PUBLIC: "public",

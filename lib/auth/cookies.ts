@@ -1,6 +1,11 @@
 import {
+  ACCESS_TOKEN_COOKIE,
+  ACCESS_TOKEN_EXP_COOKIE,
   ID_TOKEN_COOKIE,
+  OAUTH_NONCE_COOKIE,
+  OAUTH_STATE_COOKIE,
   POST_LOGIN_REDIRECT_COOKIE,
+  REFRESH_TOKEN_COOKIE,
   SESSION_COOKIE,
 } from "@/lib/auth/constants";
 
@@ -71,6 +76,10 @@ export function setAuthCookies(
   input: {
     sessionJson: string;
     idToken: string;
+    accessToken: string;
+    refreshToken: string;
+    /** Absolute Unix timestamp (seconds) when the access token expires. */
+    accessTokenExp: number;
     maxAge: number;
   },
 ) {
@@ -78,6 +87,37 @@ export function setAuthCookies(
 
   cookieStore.set(SESSION_COOKIE, input.sessionJson, options);
   cookieStore.set(ID_TOKEN_COOKIE, input.idToken, options);
+  cookieStore.set(ACCESS_TOKEN_COOKIE, input.accessToken, options);
+  cookieStore.set(REFRESH_TOKEN_COOKIE, input.refreshToken, options);
+  cookieStore.set(ACCESS_TOKEN_EXP_COOKIE, String(input.accessTokenExp), options);
+}
+
+const OAUTH_COOKIE_MAX_AGE = 300; // 5 minutes, enough to complete the auth flow
+
+export function setOAuthStateCookie(cookieStore: CookieStore, state: string) {
+  cookieStore.set(OAUTH_STATE_COOKIE, state, {
+    ...sessionCookieOptions(OAUTH_COOKIE_MAX_AGE),
+  });
+}
+
+export function setOAuthNonceCookie(cookieStore: CookieStore, nonce: string) {
+  cookieStore.set(OAUTH_NONCE_COOKIE, nonce, {
+    ...sessionCookieOptions(OAUTH_COOKIE_MAX_AGE),
+  });
+}
+
+export function clearOAuthCookies(cookieStore: CookieStore) {
+  const expired = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge: 0,
+    path: "/",
+  };
+  cookieStore.delete(OAUTH_STATE_COOKIE);
+  cookieStore.delete(OAUTH_NONCE_COOKIE);
+  cookieStore.set(OAUTH_STATE_COOKIE, "", expired);
+  cookieStore.set(OAUTH_NONCE_COOKIE, "", expired);
 }
 
 export function clearAuthCookies(cookieStore: CookieStore) {
@@ -89,8 +129,14 @@ export function clearAuthCookies(cookieStore: CookieStore) {
     path: "/",
   };
 
-  cookieStore.delete(SESSION_COOKIE);
-  cookieStore.delete(ID_TOKEN_COOKIE);
-  cookieStore.set(SESSION_COOKIE, "", expired);
-  cookieStore.set(ID_TOKEN_COOKIE, "", expired);
+  for (const name of [
+    SESSION_COOKIE,
+    ID_TOKEN_COOKIE,
+    ACCESS_TOKEN_COOKIE,
+    REFRESH_TOKEN_COOKIE,
+    ACCESS_TOKEN_EXP_COOKIE,
+  ]) {
+    cookieStore.delete(name);
+    cookieStore.set(name, "", expired);
+  }
 }
