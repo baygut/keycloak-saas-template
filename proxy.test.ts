@@ -1,13 +1,15 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 
+const KC_BASE_URL = vi.hoisted(() => "http://localhost:8080");
+
 vi.mock("@/lib/auth/server", () => ({
   parseSessionCookie: vi.fn(),
 }));
 
 vi.mock("@/lib/keycloak/keycloak", () => ({
   readKeycloakConfig: vi.fn().mockReturnValue({
-    baseUrl: "http://localhost:8080",
+    baseUrl: KC_BASE_URL,
     realm: "myrealm",
     clientId: "client",
     clientSecret: "secret",

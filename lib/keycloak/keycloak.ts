@@ -152,7 +152,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 export function decodeIdToken(token: string): DecodedIdToken | null {
   const payload = decodeJwtPayload(token);
   if (!payload) {
-    console.error("[keycloak-utils] failed to decode ID token");
     return null;
   }
   return payload as DecodedIdToken;

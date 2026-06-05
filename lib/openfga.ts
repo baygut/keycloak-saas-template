@@ -1,7 +1,9 @@
 import { OpenFgaClient } from "@openfga/sdk";
 
+import { DEFAULT_OPENFGA_API_URL } from "@/lib/defaults";
+
 function getApiUrl(): string {
-  return process.env.OPENFGA_API_URL ?? "http://localhost:8081";
+  return process.env.OPENFGA_API_URL ?? DEFAULT_OPENFGA_API_URL;
 }
 
 export function isOpenFgaConfigured(): boolean {

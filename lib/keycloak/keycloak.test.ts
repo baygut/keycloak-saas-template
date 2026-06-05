@@ -10,10 +10,14 @@ import {
   exchangeKeycloakCode,
 } from "./keycloak";
 
+const KC_BASE_URL = "http://localhost:8080";
+const KC_REALM = "myrealm";
+const KC_CLIENT_ID = "my-nextjs-client";
+
 beforeEach(() => {
-  vi.stubEnv("KEYCLOAK_URL", "http://localhost:8080");
-  vi.stubEnv("KEYCLOAK_REALM", "myrealm");
-  vi.stubEnv("KEYCLOAK_CLIENT_ID", "my-nextjs-client");
+  vi.stubEnv("KEYCLOAK_URL", KC_BASE_URL);
+  vi.stubEnv("KEYCLOAK_REALM", KC_REALM);
+  vi.stubEnv("KEYCLOAK_CLIENT_ID", KC_CLIENT_ID);
   vi.stubEnv(
     "KEYCLOAK_CLIENT_SECRET",
     "replace_with_your_keycloak_client_secret",
@@ -30,9 +34,9 @@ describe("readKeycloakConfig", () => {
     const config = readKeycloakConfig();
 
     expect(config).toEqual({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       clientSecret: "replace_with_your_keycloak_client_secret",
     });
   });
@@ -51,7 +55,7 @@ describe("getKeycloakAdminConsoleUsersUrl", () => {
     const url = getKeycloakAdminConsoleUsersUrl();
 
     expect(url).toBe(
-      "http://localhost:8080/admin/master/console/#/myrealm/users",
+      `${KC_BASE_URL}/admin/master/console/#/${KC_REALM}/users`,
     );
   });
 });
@@ -59,9 +63,9 @@ describe("getKeycloakAdminConsoleUsersUrl", () => {
 describe("createKeycloakAuthorizationUrl", () => {
   it("builds auth url with correct params", () => {
     const url = createKeycloakAuthorizationUrl({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       redirectUri: "https://app/callback",
       state: "abc123",
       nonce: "nonce123",
@@ -82,9 +86,9 @@ describe("createKeycloakAuthorizationUrl", () => {
 describe("createKeycloakLogoutUrl", () => {
   it("builds logout url with id_token_hint", () => {
     const url = createKeycloakLogoutUrl({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       postLogoutRedirectUri: "https://app",
       idTokenHint: "token123",
     });
@@ -98,9 +102,9 @@ describe("createKeycloakLogoutUrl", () => {
 
   it("works without id_token_hint", () => {
     const url = createKeycloakLogoutUrl({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       postLogoutRedirectUri: "https://app",
     });
 
@@ -111,9 +115,9 @@ describe("createKeycloakLogoutUrl", () => {
 describe("createKeycloakRegistrationUrl", () => {
   it("builds registration url", () => {
     const url = createKeycloakRegistrationUrl({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       redirectUri: "https://app/callback",
       state: "xyz",
     });
@@ -156,9 +160,9 @@ describe("exchangeKeycloakCode", () => {
     });
 
     const result = await exchangeKeycloakCode({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       clientSecret: "secret",
       code: "auth-code",
       redirectUri: "https://app/callback",
@@ -180,9 +184,9 @@ describe("exchangeKeycloakCode", () => {
     });
 
     const result = await exchangeKeycloakCode({
-      baseUrl: "http://localhost:8080",
-      realm: "myrealm",
-      clientId: "my-nextjs-client",
+      baseUrl: KC_BASE_URL,
+      realm: KC_REALM,
+      clientId: KC_CLIENT_ID,
       code: "bad-code",
       redirectUri: "https://app/callback",
     });
