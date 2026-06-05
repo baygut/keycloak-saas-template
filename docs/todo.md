@@ -1,3 +1,0 @@
-## TODO
-
-- token refresh mutex
