@@ -1,95 +1,105 @@
-# Keycloak SaaS Template
+# keycloak-saas-template
 
-Next.js 16 app with Keycloak OIDC, centralized RBAC, Prisma SQLite, and server actions.
+A Next.js starter that wires up Keycloak (authentication), OpenFGA (fine-grained authorization), and SQLite (app data) into a working multi-user SaaS skeleton — with a demo blog platform to show the patterns in action.
 
-## Getting Started
+## Prerequisites
+
+- Node.js 20+
+- Docker (running)
+
+## First run
 
 ```bash
-cp .env.example .env.local
-npm install
-npm run db:push
-npm run dev
+chmod +x start.sh
+./start.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+That's it. The script will:
 
-## Keycloak Demo
+1. Run `npm install` if `node_modules` is absent
+2. Start Keycloak, Postgres, and OpenFGA via Docker Compose
+3. Wait for each service to be healthy
+4. Create `.env.local` with default values
+5. Push the Prisma schema to SQLite (`prisma/data/app.sqlite`)
+6. Seed demo blog posts
+7. Bootstrap the OpenFGA store and authorization model, and write the generated IDs back to `.env.local`
+8. Start `next dev` and wait for it to be ready
 
-Local realm: [`keycloak/realm-demo.json`](keycloak/realm-demo.json)
+When done:
 
-| Account | Password | Roles |
-|---------|----------|-------|
-| `demo.user` | `Demo1234!` | `demo-user` |
-| `admin.user` | `Admin1234!` | `demo-user`, `demo-admin` |
+| URL | Credentials |
+|-----|-------------|
+| App | http://localhost:3000 |
+| Keycloak admin | http://localhost:8080 — `admin` / `admin` |
+| OpenFGA | http://localhost:8081 |
 
-Client: `my-nextjs-client` in realm `myrealm`.
+### Demo accounts (password: `123123`)
 
-## Architecture
+| Username | Role |
+|----------|------|
+| `demo.user` | Regular user |
+| `demo.user2` | Regular user |
+| `keymate` | Regular user |
+| `baygut` | Regular user |
+| `admin.user` | Admin — full dashboard access |
 
-### Protected resources (`lib/auth/resources.ts`)
+## Project structure
 
-| Resource ID | Routes | Server guard | Client `RoleGuard` |
-|-------------|--------|--------------|-------------------|
-| `user_restricted` | `/dashboard/profile`, `/blog`, `/blog/new`, edit own posts | `requireUserResourceAccess()` | Header profile, “New blog”, blog form public option (admin only) |
-| `admin_restricted` | `/dashboard/logs`, `/dashboard/blogs`, `/dashboard/users` | `requireRole(ROLES.ADMIN)` | Header admin links, sidebar admin section |
+```
+app/                  Next.js App Router pages
+  blog/               Public blog listing and individual posts
+  dashboard/          Admin-only dashboard (analytics, logs, users, all blogs)
+  api/                Route handlers (auth callbacks, analytics events, Keycloak proxy)
 
-Access denials render [`ForbiddenPanel`](components/dashboard/forbidden-panel.tsx) inline or redirect to `/forbidden`. Denials are logged under the `access` logger prefix and appear in **System logs** for admins.
+components/
+  ui/                 shadcn/ui primitives
+  auth/               Auth provider, role guard, resource badge
+  blog/               Blog-specific components (share panel, analytics, visibility)
+  dashboard/          Dashboard panels and skeletons
+  core/               Header, footer, error boundary, route tracker
 
-### Roles (`lib/auth/constants.ts`)
+lib/
+  auth/               Session handling, permissions, Keycloak OIDC integration
+  authz/              OpenFGA wrappers — can(), writeTuples(), listObjects()
+  blog/               Blog repository, access rules, slug generation
+  analytics/          Analytics event recording
+  keycloak/           Keycloak Admin REST API client
+  telemetry/          OpenTelemetry setup and Prisma span exporter
+  prisma.ts           Prisma client singleton (resolves SQLite path consistently)
+  openfga.ts          OpenFGA client singleton
 
-All role strings live in one place. Server guards, server actions, and client `RoleGuard` import `ROLES` from there — never hardcode role names.
+actions/              Next.js Server Actions (create/update/delete blog, auth, share)
+hooks/                React hooks (useAuth, useMobile)
+stores/               Zustand client store (auth state)
+types/                Shared TypeScript types
 
-### Auth flow
+prisma/
+  schema.prisma       DB schema (Blog, LogEvent, AnalyticsEvent, TemporaryAccess, OtelSpan)
+  migrations/         Migration history
+  data/               SQLite database file (gitignored)
 
-- **Route handlers (OAuth only):** `/api/keycloak/login`, `register`, `callback`
-- **Server actions:** `signOutAction`, blog CRUD, optional `getSessionAction`
-- **Server session:** `getSession()`, `requireSession()`, `requireRole()` in `lib/auth/server.ts`
-- **Client:** Zustand store + `useAuth()` hydrated from root layout (no `/api/auth/me` fetch on load)
-- **Edge proxy:** [`proxy.ts`](proxy.ts) protects `/dashboard`, `/blog`, `/blog/new`, `/blog/:slug/edit`
+fga/
+  model.fga           OpenFGA authorization model source
 
-### Blogs (Prisma)
+keycloak/
+  realm-demo.json     Keycloak realm export (pre-loaded on first boot)
 
-Single SQLite DB (`data/app.sqlite`) for logs and blogs.
+scripts/
+  seed.mjs            Idempotent demo data seeder
+  openfga-bootstrap.mjs  Creates the FGA store, uploads the model, backfills owner tuples
 
-| Visibility | Who can view `/blog/[slug]` |
-|------------|----------------------------|
-| `public` | Anyone (no login) |
-| `private` | Owner, users granted access via OpenFGA, or `demo-admin` |
-
-**OpenFGA:** Private posts support per-user **viewer / editor / admin** sharing from the edit page. See [`docs/openfga.md`](docs/openfga.md). Run `docker compose up -d` and `npm run openfga:bootstrap` before using sharing.
-
-Admins see all blogs on `/blog` with visibility badges. Public slugs are pre-rendered at build via `generateStaticParams`.
-
-### Admin user management
-
-`/dashboard/users` (admin only) redirects to the Keycloak Admin Console users page for the configured realm.
-
-### Logger
-
-```ts
-import logger from "@/lib/logger";
-const log = logger.child("my-module");
-log.info("message", { meta });
+docker-compose.yml    Keycloak + Postgres + OpenFGA (+ migration job)
+start.sh              Single-command bootstrap for local development
 ```
 
-Console output only in development; all levels persist to `LogEvent` via Prisma.
+## Key concepts
 
-### SSR / CSR
+**Authentication** is handled by Keycloak over OIDC. The app exchanges the authorization code for tokens, stores the session in an encrypted cookie, and refreshes it transparently.
 
-- Landing page: `force-static`
-- Dashboard: server-fetched user/admin data; admin panel lazy-loaded with `next/dynamic` (`ssr: false`)
-- Blog detail: server access check; public posts in `generateStaticParams`
+**Authorization** is split into two layers:
+- *Role-based*: Keycloak realm roles (`admin` vs regular user) gate dashboard access.
+- *Resource-based*: OpenFGA tracks per-blog relationships (`owner`, `editor`, `viewer`, `admin`) and answers `can(user, relation, resource)` checks for every read and write.
 
-## Scripts
+**Temporary access**: owners can grant time-limited access to a blog without permanently changing OpenFGA tuples — stored in the `TemporaryAccess` table and merged at check time.
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Dev server |
-| `npm run build` | Prisma generate + production build |
-| `npm run db:push` | Apply Prisma schema |
-| `npm run db:studio` | Prisma Studio |
-| `npm run openfga:bootstrap` | Create OpenFGA store, model, and backfill owner tuples |
-
-## Assignment mapping
-
-See [`docs/task.md`](docs/task.md) for the full brief. This template covers Keycloak auth, BFF/server-side authorization, `admin_restricted` / `user_restricted` dashboard resources, structured logging, and SSR optimizations.
+**Observability**: structured logs are written to the `LogEvent` table and shown in the admin log viewer; OpenTelemetry spans are stored in `OtelSpan` and surfaced in the analytics dashboard.
