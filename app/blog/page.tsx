@@ -9,14 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getSession } from "@/lib/auth/server";
-import { listPublicBlogs } from "@/lib/blog/repository";
+import { listAccessibleBlogs } from "@/lib/blog/repository";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function PublicBlogListPage() {
   const session = await getSession();
-  const blogs = await listPublicBlogs(session);
+  const blogs = await listAccessibleBlogs(session);
 
   return (
     <div className="container py-8 space-y-8">

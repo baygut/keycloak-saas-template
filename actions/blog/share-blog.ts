@@ -20,6 +20,7 @@ import logger from "@/lib/logger";
 export type BlogCollaboratorDto = {
   principal: string;
   relation: BlogShareRelation;
+  expiresAt?: string;
 };
 
 export async function listBlogSharesAction(
@@ -45,7 +46,12 @@ export async function listBlogSharesAction(
       };
     }
 
-    const collaborators = await listBlogCollaborators(blog.id);
+    const raw = await listBlogCollaborators(blog.id);
+    const collaborators: BlogCollaboratorDto[] = raw.map((c) => ({
+      principal: c.principal,
+      relation: c.relation,
+      expiresAt: c.expiresAt?.toISOString(),
+    }));
     return { ok: true, data: { collaborators } };
   } catch {
     return { ok: false, error: "Unauthorized", code: "UNAUTHORIZED" };
@@ -56,6 +62,7 @@ export async function grantBlogAccessAction(input: {
   slug: string;
   principal: string;
   relation: string;
+  expiresAt?: string;
 }): Promise<ActionResult<{ principal: string; relation: BlogShareRelation }>> {
   try {
     const session = await requireSession();
@@ -97,7 +104,17 @@ export async function grantBlogAccessAction(input: {
       return { ok: false, error: "The owner already has full access" };
     }
 
-    await grantBlogAccess(blog.id, targetPrincipal, input.relation);
+    const expiresAt = input.expiresAt ? new Date(input.expiresAt) : undefined;
+
+    if (expiresAt && isNaN(expiresAt.getTime())) {
+      return { ok: false, error: "Invalid expiry date" };
+    }
+
+    if (expiresAt && expiresAt <= new Date()) {
+      return { ok: false, error: "Expiry date must be in the future" };
+    }
+
+    await grantBlogAccess(blog.id, targetPrincipal, input.relation, expiresAt);
 
     revalidatePath(`/blog/${blog.slug}`);
     revalidatePath(`/blog/${blog.slug}/edit`);

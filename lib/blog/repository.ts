@@ -83,6 +83,43 @@ export async function listPublicBlogs(
   return rows.map(mapBlog);
 }
 
+export async function listAccessibleBlogs(
+  session: SessionUser | null,
+): Promise<BlogRecord[]> {
+  if (!session) {
+    const rows = await prisma.blog.findMany({
+      where: { visibility: BLOG_VISIBILITY.PUBLIC },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+    return rows.map(mapBlog);
+  }
+
+  if (isAdmin(session)) {
+    const rows = await prisma.blog.findMany({
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+    return rows.map(mapBlog);
+  }
+
+  const principal = getSessionPrincipal(session);
+  const sharedIds = isOpenFgaConfigured()
+    ? await listSharedBlogIds(principal)
+    : [];
+
+  const rows = await prisma.blog.findMany({
+    where: {
+      OR: [
+        { visibility: { in: [BLOG_VISIBILITY.PUBLIC, BLOG_VISIBILITY.USERS_ONLY] } },
+        { ownerKey: principal },
+        { id: { in: sharedIds } },
+      ],
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+  });
+
+  return rows.map(mapBlog);
+}
+
 export async function listBlogsForViewer(
   session: SessionUser,
 ): Promise<BlogRecord[]> {

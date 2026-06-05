@@ -6,8 +6,20 @@ import {
   canEditBlogFga,
   canShareBlogFga,
   canViewBlogFga,
+  revokeBlogAccess,
 } from "@/lib/authz/blog";
+import { clearTemporaryAccess, getTemporaryExpiry } from "@/lib/authz/temporary";
 import { isOpenFgaConfigured } from "@/lib/openfga";
+
+async function evictIfExpired(blogId: string, principal: string): Promise<boolean> {
+  const expiry = await getTemporaryExpiry(blogId, principal);
+  if (!expiry || expiry > new Date()) return false;
+  await Promise.all([
+    revokeBlogAccess(blogId, principal),
+    clearTemporaryAccess(blogId, principal),
+  ]);
+  return true;
+}
 
 export type BlogRecord = {
   id: string;
@@ -52,6 +64,10 @@ export async function canViewBlog(
     return false;
   }
 
+  if (await evictIfExpired(blog.id, principal)) {
+    return false;
+  }
+
   return canViewBlogFga(principal, blog.id);
 }
 
@@ -70,6 +86,10 @@ export async function canManageBlog(
   }
 
   if (!isOpenFgaConfigured()) {
+    return false;
+  }
+
+  if (await evictIfExpired(blog.id, principal)) {
     return false;
   }
 
@@ -94,6 +114,10 @@ export async function canDeleteBlog(
     return false;
   }
 
+  if (await evictIfExpired(blog.id, principal)) {
+    return false;
+  }
+
   return canDeleteBlogFga(principal, blog.id);
 }
 
@@ -112,6 +136,10 @@ export async function canShareBlog(
   }
 
   if (!isOpenFgaConfigured()) {
+    return false;
+  }
+
+  if (await evictIfExpired(blog.id, principal)) {
     return false;
   }
 

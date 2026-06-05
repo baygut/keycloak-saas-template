@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VisibilityBadge } from "@/components/blog/visibility-badge";
 import { NewBlogButton } from "@/components/blog/new-blog-button";
-import { getSessionPrincipal } from "@/lib/auth/permissions";
 import { requireUserResourceAccess } from "@/lib/auth/server";
 import { canManageBlog } from "@/lib/blog/access";
 import { getBlogViewCounts } from "@/lib/analytics/events";
@@ -13,15 +12,13 @@ import { formatDate } from "@/lib/format";
 
 export default async function MyBlogsPage() {
   const session = await requireUserResourceAccess();
-  const principal = getSessionPrincipal(session);
 
   const allBlogs = await listBlogsForViewer(session);
-  const ownBlogs = allBlogs.filter((b) => b.ownerKey === principal);
 
-  const viewCounts = await getBlogViewCounts(ownBlogs.map((b) => b.id));
+  const viewCounts = await getBlogViewCounts(allBlogs.map((b) => b.id));
 
   const blogsWithEdit = await Promise.all(
-    ownBlogs.map(async (blog) => ({
+    allBlogs.map(async (blog) => ({
       blog,
       canEdit: await canManageBlog(blog, session),
     })),
@@ -42,7 +39,7 @@ export default async function MyBlogsPage() {
       {blogsWithEdit.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            You haven&apos;t published any blogs yet.
+            No blogs yet — create one or ask someone to share access with you.
           </CardContent>
         </Card>
       ) : (

@@ -51,10 +51,18 @@ type BlogSharePanelProps = {
   ownerKey: string;
 };
 
+function formatExpiry(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  if (date <= now) return "Expired";
+  return `Expires ${date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+}
+
 export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
   const [collaborators, setCollaborators] = useState<BlogCollaboratorDto[]>([]);
   const [principal, setPrincipal] = useState("");
   const [relation, setRelation] = useState<BlogShareRelation>("viewer");
+  const [expiresAt, setExpiresAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
@@ -81,7 +89,12 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
     setError(null);
 
     startTransition(async () => {
-      const result = await grantBlogAccessAction({ slug, principal, relation });
+      const result = await grantBlogAccessAction({
+        slug,
+        principal,
+        relation,
+        expiresAt: expiresAt || undefined,
+      });
 
       if (!result.ok) {
         setError(result.error);
@@ -89,6 +102,7 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
       }
 
       setPrincipal("");
+      setExpiresAt("");
       await refreshShares();
     });
   }
@@ -160,6 +174,19 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
               {isPending ? "Saving..." : "Grant access"}
             </Button>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="share-expires">Expires (optional)</Label>
+            <Input
+              id="share-expires"
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(event) => setExpiresAt(event.target.value)}
+              className="max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave blank for permanent access.
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground">
             {ACCESS_LEVELS.find((level) => level.value === relation)?.hint}
           </p>
@@ -186,6 +213,13 @@ export function BlogSharePanel({ slug, ownerKey }: BlogSharePanelProps) {
                     <span className="ml-2 text-xs uppercase tracking-wider text-muted-foreground">
                       {entry.relation}
                     </span>
+                    {entry.expiresAt ? (
+                      <span
+                        className={`ml-2 text-xs ${new Date(entry.expiresAt) <= new Date() ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        · {formatExpiry(entry.expiresAt)}
+                      </span>
+                    ) : null}
                   </div>
                   <Button
                     type="button"

@@ -7,7 +7,15 @@ import {
   toFgaUser,
 } from "@/lib/authz/principals";
 import { can, deleteTuples, listObjectIds, writeTuples } from "@/lib/authz/can";
-import { ClientWriteRequestOnMissingDeletes } from "@openfga/sdk";
+import {
+  clearTemporaryAccess,
+  getExpiryMapForBlog,
+  setTemporaryAccess,
+} from "@/lib/authz/temporary";
+import {
+  ClientWriteRequestOnDuplicateWrites,
+  ClientWriteRequestOnMissingDeletes,
+} from "@openfga/sdk";
 import { getOpenFgaClient, isOpenFgaConfigured } from "@/lib/openfga";
 import logger from "@/lib/logger";
 
@@ -16,6 +24,7 @@ const log = logger.child("authz-blog");
 export type BlogCollaborator = {
   principal: string;
   relation: BlogShareRelation;
+  expiresAt?: Date;
 };
 
 export async function writeBlogOwnerTuple(
@@ -144,18 +153,26 @@ export async function listBlogCollaborators(
     });
   }
 
-  return collaborators.sort((a, b) => a.principal.localeCompare(b.principal));
+  const expiryMap = await getExpiryMapForBlog(blogId);
+
+  return collaborators
+    .map((c) => ({
+      ...c,
+      expiresAt: expiryMap.get(c.principal),
+    }))
+    .sort((a, b) => a.principal.localeCompare(b.principal));
 }
 
 export async function grantBlogAccess(
   blogId: string,
   targetPrincipal: string,
   relation: BlogShareRelation,
+  expiresAt?: Date,
 ): Promise<void> {
   const object = toFgaBlog(blogId);
   const user = toFgaUser(targetPrincipal);
 
-  const deletes = BLOG_SHARE_RELATIONS.filter((r) => r !== relation) // 🔥 CRITICAL FIX
+  const deletes = BLOG_SHARE_RELATIONS.filter((r) => r !== relation)
     .map((shareRelation) => ({
       user,
       relation: shareRelation,
@@ -170,9 +187,16 @@ export async function grantBlogAccess(
     {
       conflict: {
         onMissingDeletes: ClientWriteRequestOnMissingDeletes.Ignore,
+        onDuplicateWrites: ClientWriteRequestOnDuplicateWrites.Ignore,
       },
     },
   );
+
+  if (expiresAt) {
+    await setTemporaryAccess(blogId, targetPrincipal, expiresAt);
+  } else {
+    await clearTemporaryAccess(blogId, targetPrincipal);
+  }
 }
 
 export async function revokeBlogAccess(
@@ -194,5 +218,8 @@ export async function revokeBlogAccess(
 
   if (deletes.length === 0) return;
 
-  await deleteTuples(deletes);
+  await Promise.all([
+    deleteTuples(deletes),
+    clearTemporaryAccess(blogId, targetPrincipal),
+  ]);
 }

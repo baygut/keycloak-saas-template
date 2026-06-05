@@ -12,6 +12,12 @@ vi.mock("@/lib/authz/blog", () => ({
   canEditBlogFga: vi.fn(),
   canDeleteBlogFga: vi.fn(),
   canShareBlogFga: vi.fn(),
+  revokeBlogAccess: vi.fn(),
+}));
+
+vi.mock("@/lib/authz/temporary", () => ({
+  getTemporaryExpiry: vi.fn(),
+  clearTemporaryAccess: vi.fn(),
 }));
 
 import { isOpenFgaConfigured } from "@/lib/openfga";
@@ -20,7 +26,9 @@ import {
   canEditBlogFga,
   canShareBlogFga,
   canViewBlogFga,
+  revokeBlogAccess,
 } from "@/lib/authz/blog";
+import { clearTemporaryAccess, getTemporaryExpiry } from "@/lib/authz/temporary";
 import {
   canDeleteBlog,
   canManageBlog,
@@ -183,5 +191,47 @@ describe("canShareBlog", () => {
     const session = makeSession({ username: "blog-admin" });
     expect(await canShareBlog(blog, session)).toBe(true);
     expect(canShareBlogFga).toHaveBeenCalledWith("blog-admin", "blog-1");
+  });
+});
+
+describe("temporary access expiry", () => {
+  it("denies and evicts when access has expired", async () => {
+    vi.mocked(isOpenFgaConfigured).mockReturnValue(true);
+    vi.mocked(getTemporaryExpiry).mockResolvedValue(new Date("2020-01-01"));
+    vi.mocked(revokeBlogAccess).mockResolvedValue(undefined);
+    vi.mocked(clearTemporaryAccess).mockResolvedValue(undefined);
+
+    const blog = makeBlog({ visibility: "private", ownerKey: "owner" });
+    const session = makeSession({ username: "shared-user" });
+
+    expect(await canViewBlog(blog, session)).toBe(false);
+    expect(revokeBlogAccess).toHaveBeenCalledWith("blog-1", "shared-user");
+    expect(clearTemporaryAccess).toHaveBeenCalledWith("blog-1", "shared-user");
+    expect(canViewBlogFga).not.toHaveBeenCalled();
+  });
+
+  it("allows when access has not yet expired", async () => {
+    vi.mocked(isOpenFgaConfigured).mockReturnValue(true);
+    vi.mocked(getTemporaryExpiry).mockResolvedValue(new Date("2099-01-01"));
+    vi.mocked(canViewBlogFga).mockResolvedValue(true);
+
+    const blog = makeBlog({ visibility: "private", ownerKey: "owner" });
+    const session = makeSession({ username: "shared-user" });
+
+    expect(await canViewBlog(blog, session)).toBe(true);
+    expect(revokeBlogAccess).not.toHaveBeenCalled();
+    expect(canViewBlogFga).toHaveBeenCalledWith("shared-user", "blog-1");
+  });
+
+  it("allows when no temporary record exists (permanent access)", async () => {
+    vi.mocked(isOpenFgaConfigured).mockReturnValue(true);
+    vi.mocked(getTemporaryExpiry).mockResolvedValue(null);
+    vi.mocked(canViewBlogFga).mockResolvedValue(true);
+
+    const blog = makeBlog({ visibility: "private", ownerKey: "owner" });
+    const session = makeSession({ username: "shared-user" });
+
+    expect(await canViewBlog(blog, session)).toBe(true);
+    expect(revokeBlogAccess).not.toHaveBeenCalled();
   });
 });

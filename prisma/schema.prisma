@@ -55,6 +55,17 @@ model AnalyticsEvent {
   @@index([createdAt(sort: Desc)])
 }
 
+model TemporaryAccess {
+  id        String   @id @default(cuid())
+  blogId    String
+  principal String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([blogId, principal])
+  @@index([expiresAt])
+}
+
 model OtelSpan {
   id           String   @id @default(cuid())
   traceId      String
