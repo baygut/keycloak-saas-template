@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart2,
   FileText,
   LayoutDashboard,
   Lock,
@@ -40,6 +41,7 @@ const NAV_ICONS: Record<DashboardNavIcon, typeof LayoutDashboard> = {
   users: Users,
   blogs: FileText,
   logs: ScrollText,
+  analytics: BarChart2,
 };
 
 type AppSidebarProps = {

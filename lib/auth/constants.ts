@@ -37,6 +37,7 @@ export const ACCESS_TOKEN_EXP_COOKIE = "access_token_exp";
 export const BLOG_VISIBILITY = {
   PUBLIC: "public",
   PRIVATE: "private",
+  USERS_ONLY: "users_only",
 } as const;
 
 export type BlogVisibility =

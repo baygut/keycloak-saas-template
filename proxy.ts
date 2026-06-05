@@ -23,7 +23,6 @@ const PROTECTED_PREFIXES = ["/dashboard"];
 const PROACTIVE_REFRESH_SECONDS = 30;
 
 function isProtectedBlogPath(pathname: string): boolean {
-  if (pathname === "/blog") return true;
   if (pathname === "/blog/new") return true;
   return /^\/blog\/[^/]+\/edit$/.test(pathname);
 }
@@ -175,7 +174,8 @@ export async function proxy(request: NextRequest) {
   const isAdminRoute =
     pathname.startsWith("/dashboard/users") ||
     pathname.startsWith("/dashboard/blogs") ||
-    pathname.startsWith("/dashboard/logs");
+    pathname.startsWith("/dashboard/logs") ||
+    pathname.startsWith("/dashboard/analytics");
 
   if (isAdminRoute) {
     if (!effectiveSession.roles.includes("admin")) {
@@ -195,7 +195,9 @@ export async function proxy(request: NextRequest) {
 
   // 2. User-restricted routes (profile, blogs access)
   const isUserRestrictedRoute =
-    pathname.startsWith("/dashboard/profile") || isProtectedBlogPath(pathname);
+    pathname.startsWith("/dashboard/profile") ||
+    pathname.startsWith("/dashboard/my-blogs") ||
+    isProtectedBlogPath(pathname);
 
   if (isUserRestrictedRoute) {
     const hasUserAccess =
@@ -223,5 +225,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/blog", "/blog/new", "/blog/:slug/edit"],
+  matcher: ["/dashboard/:path*", "/blog/new", "/blog/:slug/edit"],
 };

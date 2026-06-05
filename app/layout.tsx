@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AuthProvider, AuthRefresher } from "@/components/auth/auth-provider";
+import { RouteTransitionTracker } from "@/components/core/route-transition-tracker";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getSafeSessionUser, getSession } from "@/lib/auth/server";
 import "./globals.css";
@@ -38,6 +39,7 @@ export default async function RootLayout({
         <AuthProvider initialUser={initialUser}>
           <TooltipProvider>
             <AuthRefresher />
+            <RouteTransitionTracker />
             {children}
           </TooltipProvider>
         </AuthProvider>

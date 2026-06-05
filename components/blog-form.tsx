@@ -105,7 +105,7 @@ export function BlogForm({
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium leading-none">Visibility</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-4 has-checked:border-primary has-checked:bg-primary/5">
             <input
               type="radio"
@@ -117,7 +117,22 @@ export function BlogForm({
             <span className="space-y-1">
               <span className="block text-sm font-medium">Private</span>
               <span className="block text-xs text-muted-foreground">
-                Only you, people you share with, and admins can view this post.
+                Only you, people you share with, and admins.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-border p-4 has-checked:border-primary has-checked:bg-primary/5">
+            <input
+              type="radio"
+              name="visibility"
+              checked={visibility === BLOG_VISIBILITY.USERS_ONLY}
+              onChange={() => setVisibility(BLOG_VISIBILITY.USERS_ONLY)}
+              className="mt-0.5 accent-primary"
+            />
+            <span className="space-y-1">
+              <span className="block text-sm font-medium">Users only</span>
+              <span className="block text-xs text-muted-foreground">
+                Any signed-in user can view this post.
               </span>
             </span>
           </label>

@@ -11,7 +11,8 @@ export type DashboardNavIcon =
   | "user"
   | "users"
   | "blogs"
-  | "logs";
+  | "logs"
+  | "analytics";
 
 export type DashboardNavItem = {
   href: string;
@@ -41,7 +42,7 @@ export function getDashboardSidebarConfig(
       resource: PROTECTED_RESOURCES.USER,
     },
     {
-      href: "/blog",
+      href: RESOURCE_ROUTES.userRestricted.blogs,
       label: "My Blogs",
       icon: "blogs",
       resource: PROTECTED_RESOURCES.USER,
@@ -66,6 +67,12 @@ export function getDashboardSidebarConfig(
         href: RESOURCE_ROUTES.adminRestricted.logs,
         label: "System logs",
         icon: "logs",
+        resource: PROTECTED_RESOURCES.ADMIN,
+      },
+      {
+        href: RESOURCE_ROUTES.adminRestricted.analytics,
+        label: "Analytics",
+        icon: "analytics",
         resource: PROTECTED_RESOURCES.ADMIN,
       },
     );

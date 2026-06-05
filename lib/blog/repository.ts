@@ -67,6 +67,22 @@ export async function ensureUniqueSlug(base: string): Promise<string> {
   return appendSlugSuffix(base);
 }
 
+export async function listPublicBlogs(
+  session: SessionUser | null,
+): Promise<BlogRecord[]> {
+  const visibilities: string[] = [BLOG_VISIBILITY.PUBLIC];
+  if (session) {
+    visibilities.push(BLOG_VISIBILITY.USERS_ONLY);
+  }
+
+  const rows = await prisma.blog.findMany({
+    where: { visibility: { in: visibilities } },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+  });
+
+  return rows.map(mapBlog);
+}
+
 export async function listBlogsForViewer(
   session: SessionUser,
 ): Promise<BlogRecord[]> {

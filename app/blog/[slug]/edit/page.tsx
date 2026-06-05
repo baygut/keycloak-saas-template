@@ -46,7 +46,9 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
   const visibility: BlogVisibility =
     blog.visibility === BLOG_VISIBILITY.PUBLIC
       ? BLOG_VISIBILITY.PUBLIC
-      : BLOG_VISIBILITY.PRIVATE;
+      : blog.visibility === BLOG_VISIBILITY.USERS_ONLY
+        ? BLOG_VISIBILITY.USERS_ONLY
+        : BLOG_VISIBILITY.PRIVATE;
 
   const canManageSharing = await canShareBlog(blog, session);
 

@@ -22,17 +22,57 @@ model LogEvent {
 }
 
 model Blog {
-  id         String   @id @default(cuid())
-  slug       String   @unique
+  id         String          @id @default(cuid())
+  slug       String          @unique
   title      String
   summary    String
   content    String
-  visibility String   @default("private")
+  visibility String          @default("private")
   ownerKey   String
   ownerName  String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  views      AnalyticsEvent[]
 
   @@index([ownerKey])
   @@index([visibility])
+}
+
+model AnalyticsEvent {
+  id           String   @id @default(cuid())
+  event        String
+  path         String?
+  resourceId   String?
+  resourceType String?
+  viewerKey    String?
+  durationMs   Int?
+  meta         String?
+  createdAt    DateTime @default(now())
+  blog         Blog?    @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([event])
+  @@index([resourceId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model OtelSpan {
+  id           String   @id @default(cuid())
+  traceId      String
+  spanId       String   @unique
+  parentSpanId String?
+  name         String
+  kind         String
+  startTime    DateTime
+  endTime      DateTime
+  durationMs   Int
+  statusCode   String   @default("UNSET")
+  statusMsg    String?
+  attributes   String?
+  service      String?
+  createdAt    DateTime @default(now())
+
+  @@index([traceId])
+  @@index([name])
+  @@index([startTime(sort: Desc)])
+  @@index([statusCode])
 }

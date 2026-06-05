@@ -13,9 +13,13 @@ export function VisibilityBadge({ blog, session }: VisibilityBadgeProps) {
   const principal = getSessionPrincipal(session);
   const tags: string[] = [];
 
-  tags.push(
-    blog.visibility === BLOG_VISIBILITY.PUBLIC ? "Public" : "Private",
-  );
+  const visibilityLabel =
+    blog.visibility === BLOG_VISIBILITY.PUBLIC
+      ? "Public"
+      : blog.visibility === BLOG_VISIBILITY.USERS_ONLY
+        ? "Users only"
+        : "Private";
+  tags.push(visibilityLabel);
 
   if (blog.ownerKey === principal) {
     tags.push("Own");

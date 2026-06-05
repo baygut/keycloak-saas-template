@@ -34,6 +34,10 @@ export async function canViewBlog(
     return false;
   }
 
+  if (blog.visibility === BLOG_VISIBILITY.USERS_ONLY) {
+    return true;
+  }
+
   if (isAdmin(session)) {
     return true;
   }

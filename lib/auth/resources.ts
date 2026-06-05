@@ -10,12 +10,13 @@ export type ProtectedResourceId =
 export const RESOURCE_ROUTES = {
   userRestricted: {
     profile: "/dashboard/profile",
-    blogs: "/blog",
+    blogs: "/dashboard/my-blogs",
     newBlog: "/blog/new",
   },
   adminRestricted: {
     users: "/dashboard/users",
     blogs: "/dashboard/blogs",
     logs: "/dashboard/logs",
+    analytics: "/dashboard/analytics",
   },
 } as const;

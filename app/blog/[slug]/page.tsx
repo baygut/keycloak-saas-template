@@ -12,9 +12,11 @@ import {
 import { BlogDeleteButton } from "@/components/blog-delete-button";
 import { VisibilityBadge } from "@/components/blog/visibility-badge";
 import { accessDeniedPanel } from "@/lib/auth/forbidden-response";
+import { getSessionPrincipal } from "@/lib/auth/permissions";
 import { getSession } from "@/lib/auth/server";
 import { canDeleteBlog, canManageBlog, canViewBlog } from "@/lib/blog/access";
 import { getBlogBySlug } from "@/lib/blog/repository";
+import { persistAnalyticsEvent } from "@/lib/analytics/events";
 import { formatDate } from "@/lib/format";
 
 type BlogDetailPageProps = {
@@ -46,6 +48,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   if (!(await canViewBlog(blog, session))) {
     return accessDeniedPanel({
+
       session,
       message: "You do not have permission to view this blog post.",
       returnTo: `/blog/${slug}`,
@@ -55,6 +58,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       },
     });
   }
+
+  await persistAnalyticsEvent({
+    event: "page_view",
+    path: `/blog/${slug}`,
+    resourceId: blog.id,
+    resourceType: "blog",
+    viewerKey: session ? getSessionPrincipal(session) : undefined,
+  });
 
   const canEdit = session ? await canManageBlog(blog, session) : false;
   const canDelete = session ? await canDeleteBlog(blog, session) : false;
