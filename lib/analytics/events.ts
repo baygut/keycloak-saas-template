@@ -186,3 +186,63 @@ export async function getRecentOtelSpans(limit = 20): Promise<OtelSpanRow[]> {
     },
   });
 }
+
+export type AnalyticsEventRow = {
+  id: string;
+  event: string;
+  path: string | null;
+  resourceType: string | null;
+  viewerKey: string | null;
+  durationMs: number | null;
+  createdAt: string;
+};
+
+export async function listAnalyticsEventsCursor(options: {
+  cursor?: string;
+  limit?: number;
+}): Promise<{ events: AnalyticsEventRow[]; nextCursor: string | null }> {
+  const take = Math.min(options.limit ?? 20, 100);
+
+  const select = {
+    id: true,
+    event: true,
+    path: true,
+    resourceType: true,
+    viewerKey: true,
+    durationMs: true,
+    createdAt: true,
+  } as const;
+
+  let rows: Awaited<ReturnType<typeof prisma.analyticsEvent.findMany<{ select: typeof select }>>>;
+  if (options.cursor) {
+    rows = await prisma.analyticsEvent.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: take + 1,
+      cursor: { id: options.cursor },
+      skip: 1,
+      select,
+    });
+  } else {
+    rows = await prisma.analyticsEvent.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: take + 1,
+      select,
+    });
+  }
+
+  const hasNext = rows.length > take;
+  const items = hasNext ? rows.slice(0, take) : rows;
+
+  return {
+    events: items.map((r) => ({
+      id: r.id,
+      event: r.event,
+      path: r.path,
+      resourceType: r.resourceType,
+      viewerKey: r.viewerKey,
+      durationMs: r.durationMs,
+      createdAt: r.createdAt.toISOString(),
+    })),
+    nextCursor: hasNext ? items[items.length - 1].id : null,
+  };
+}

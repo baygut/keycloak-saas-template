@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import Link from "next/link";
 
 import { ResourceBadge } from "@/components/auth/resource-badge";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AnalyticsPanel } from "@/components/dashboard/analytics-panel";
 import { ErrorBoundary } from "@/components/core/error-boundary";
 import { ROLES } from "@/lib/auth/constants";
@@ -14,15 +16,20 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-sm text-muted-foreground">
-            Page views, route performance, and OpenTelemetry traces.
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-sm text-muted-foreground">
+              Page views, route performance, and OpenTelemetry traces.
+            </p>
+          </div>
+          <ResourceBadge resource={PROTECTED_RESOURCES.ADMIN} />
+          <Badge variant="outline">{ROLES.ADMIN}</Badge>
         </div>
-        <ResourceBadge resource={PROTECTED_RESOURCES.ADMIN} />
-        <Badge variant="outline">{ROLES.ADMIN}</Badge>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/dashboard/analytics/all">See all events →</Link>
+        </Button>
       </div>
 
       <Suspense fallback={<AnalyticsLoading />}>

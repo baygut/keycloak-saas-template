@@ -68,13 +68,12 @@ function NavMenu({ items }: { items: DashboardNavItem[] }) {
         return (
           <SidebarMenuItem key={item.href}>
             <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-              <Link href={item.href} className="flex min-w-0 items-center gap-2 overflow-hidden">
+              <Link
+                href={item.href}
+                className="flex min-w-0 items-center gap-2 overflow-hidden"
+              >
                 <Icon className="size-4 shrink-0" />
                 <span className="truncate">{item.label}</span>
-                <ResourceBadge
-                  resource={item.resource}
-                  className="ml-auto hidden shrink-0 group-data-[collapsible=icon]:hidden lg:inline-flex"
-                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

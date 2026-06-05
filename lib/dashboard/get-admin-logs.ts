@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth/server";
 import { ROLES } from "@/lib/auth/constants";
 import type { SessionUser } from "@/lib/auth/types";
-import { listRecentLogEvents } from "@/lib/log-store";
+import { listRecentLogEvents, listLogEventsCursor } from "@/lib/log-store";
 import logger from "@/lib/logger";
 
 const log = logger.child("admin-logs");
@@ -36,4 +36,24 @@ export async function getAdminRecentLogEvents(
     meta: event.meta,
     time: event.ts,
   }));
+}
+
+export async function getAdminLogEventsCursor(options: {
+  cursor?: string;
+  limit?: number;
+}): Promise<{ events: AdminLogEvent[]; nextCursor: string | null }> {
+  const { events, nextCursor } = await listLogEventsCursor(options);
+
+  return {
+    events: events.map((event) => ({
+      id: event.id,
+      level: event.level,
+      prefix: event.prefix,
+      service: event.service,
+      message: event.msg,
+      meta: event.meta,
+      time: event.ts,
+    })),
+    nextCursor,
+  };
 }
