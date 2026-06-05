@@ -34,6 +34,63 @@ const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
 
 const SEED_BLOGS = [
   {
+    slug: "welcome",
+    title: "keycloak-saas-template",
+    summary:
+      "A Next.js starter that wires up Keycloak, OpenFGA, and SQLite into a working multi-user SaaS skeleton — with a demo blog platform to show the patterns in action.",
+    content: `# keycloak-saas-template
+
+A Next.js starter that wires up Keycloak (authentication), OpenFGA (fine-grained authorization), and SQLite (app data) into a working multi-user SaaS skeleton — with a demo blog platform to show the patterns in action.
+
+## Prerequisites
+
+- Node.js 20+
+- Docker (running)
+
+## First run
+
+\`\`\`bash
+chmod +x start.sh
+./start.sh
+\`\`\`
+
+That's it. The script will:
+
+1. Run \`npm install\` if \`node_modules\` is absent
+2. Start Keycloak, Postgres, and OpenFGA via Docker Compose
+3. Wait for each service to be healthy
+4. Create \`.env.local\` with default values
+5. Push the Prisma schema to SQLite (\`prisma/data/app.sqlite\`)
+6. Seed demo blog posts
+7. Bootstrap the OpenFGA store and authorization model, and write the generated IDs back to \`.env.local\`
+8. Start \`next dev\` and wait for it to be ready
+
+## Demo accounts (password: \`123123\`)
+
+| Username | Role |
+|----------|------|
+| \`demo.user\` | Regular user |
+| \`demo.user2\` | Regular user |
+| \`keymate\` | Regular user |
+| \`baygut\` | Regular user |
+| \`admin.user\` | Admin — full dashboard access |
+
+## Key concepts
+
+**Authentication** is handled by Keycloak over OIDC. The app exchanges the authorization code for tokens, stores the session in an encrypted cookie, and refreshes it transparently.
+
+**Authorization** is split into two layers:
+- *Role-based*: Keycloak realm roles (\`admin\` vs regular user) gate dashboard access.
+- *Resource-based*: OpenFGA tracks per-blog relationships (\`owner\`, \`editor\`, \`viewer\`, \`admin\`) and answers \`can(user, relation, resource)\` checks for every read and write.
+
+**Temporary access**: owners can grant time-limited access to a blog without permanently changing OpenFGA tuples — stored in the \`TemporaryAccess\` table and merged at check time.
+
+**Observability**: structured logs are written to the \`LogEvent\` table and shown in the admin log viewer; OpenTelemetry spans are stored in \`OtelSpan\` and surfaced in the analytics dashboard.`,
+    visibility: "public",
+    ownerKey: "admin.user",
+    ownerName: "Admin User",
+  },
+  {
     slug: "getting-started-with-keycloak",
     title: "Getting Started with Keycloak",
     summary:

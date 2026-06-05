@@ -23,6 +23,7 @@ import {
 import { getBlogBySlug } from "@/lib/blog/repository";
 import { persistAnalyticsEvent } from "@/lib/analytics/events";
 import { formatDate } from "@/lib/format";
+import { MarkdownContent } from "@/components/markdown-content";
 
 type BlogDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -101,9 +102,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             {blog.summary}
           </p>
 
-          <div className="prose prose-invert max-w-none text-sm leading-7 text-muted-foreground whitespace-pre-wrap">
-            {blog.content}
-          </div>
+          <MarkdownContent content={blog.content} />
         </CardContent>
         <CardFooter className="flex flex-wrap gap-4">
           <Button variant="ghost" size="sm" asChild>
