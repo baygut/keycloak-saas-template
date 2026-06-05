@@ -8,9 +8,14 @@ declare global {
   var __PRISMA_CLIENT_SINGLETON__: PrismaClient | undefined;
 }
 
+// Prisma CLI resolves relative SQLite paths relative to the schema file (prisma/).
+// Prisma Client resolves them relative to process.cwd(). We normalise to an
+// absolute path here so both always agree on the same file on disk.
+const SCHEMA_DIR = resolve(process.cwd(), "prisma");
+
 function ensureDatabaseUrl() {
   const configured = process.env.DATABASE_URL?.trim();
-  const defaultPath = join(process.cwd(), "data", "app.sqlite");
+  const defaultPath = join(SCHEMA_DIR, "data", "app.sqlite");
 
   if (!configured) {
     mkdirSync(dirname(defaultPath), { recursive: true });
@@ -26,7 +31,7 @@ function ensureDatabaseUrl() {
   const rawPath = configured.slice("file:".length);
   const sqlitePath = rawPath.startsWith("/")
     ? rawPath
-    : resolve(process.cwd(), rawPath);
+    : resolve(SCHEMA_DIR, rawPath);
 
   mkdirSync(dirname(sqlitePath), { recursive: true });
   const url = `file:${sqlitePath}`;

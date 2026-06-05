@@ -13,6 +13,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --check",
     "format:fix": "prettier . --write",
+    "db:seed": "node scripts/seed.mjs",
     "openfga:bootstrap": "node scripts/openfga-bootstrap.mjs",
     "test": "vitest"
   },

@@ -104,30 +104,28 @@ async function main() {
     storeId,
     authorizationModelId: modelId,
   });
-
+  const prismaDir = resolve(root, "prisma");
   const databaseUrl =
-    process.env.DATABASE_URL ?? `file:${resolve(root, "data/app.sqlite")}`;
-  const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+    process.env.DATABASE_URL ?? `file:${resolve(prismaDir, "data/app.sqlite")}`;
+  const prisma = new PrismaClient({
+    datasources: { db: { url: databaseUrl } },
+  });
 
   const blogs = await prisma.blog.findMany({
     select: { id: true, ownerKey: true, slug: true },
   });
 
   let backfilled = 0;
-
   for (const blog of blogs) {
-    await fga.write(
-      {
-        writes: [
-          {
-            user: `user:${blog.ownerKey}`,
-            relation: "owner",
-            object: `blog:${blog.id}`,
-          },
-        ],
-      },
-      { conflict: { onDuplicateWrites: OnDuplicateWrites.Ignore } },
-    );
+    await fga.write({
+      writes: [
+        {
+          user: `user:${blog.ownerKey}`,
+          relation: "owner",
+          object: `blog:${blog.id}`,
+        },
+      ],
+    });
     backfilled += 1;
     console.log(`  owner tuple: blog:${blog.id} (${blog.slug})`);
   }
@@ -149,11 +147,22 @@ async function main() {
   const envLocalPath = resolve(root, ".env.local");
   if (existsSync(envLocalPath)) {
     const current = readFileSync(envLocalPath, "utf8");
-    if (!current.includes("OPENFGA_STORE_ID")) {
-      writeFileSync(envLocalPath, current.trimEnd() + envBlock);
-      console.log(`Appended OpenFGA vars to ${envLocalPath}`);
+    const hasPopulatedStoreId = /^OPENFGA_STORE_ID=\S/m.test(current);
+    if (!hasPopulatedStoreId) {
+      // Replace empty placeholder values written by start.sh, or append if absent
+      let updated = current
+        .replace(/^OPENFGA_API_URL=\s*$/m, `OPENFGA_API_URL=${apiUrl}`)
+        .replace(/^OPENFGA_STORE_ID=\s*$/m, `OPENFGA_STORE_ID=${storeId}`)
+        .replace(/^OPENFGA_AUTHORIZATION_MODEL_ID=\s*$/m, `OPENFGA_AUTHORIZATION_MODEL_ID=${modelId}`);
+      if (!updated.includes(`OPENFGA_STORE_ID=${storeId}`)) {
+        updated = updated.trimEnd() + envBlock;
+      }
+      writeFileSync(envLocalPath, updated);
+      console.log(`Updated OpenFGA vars in ${envLocalPath}`);
     } else {
-      console.log(`${envLocalPath} already has OPENFGA_STORE_ID — update manually if re-bootstrapping.`);
+      console.log(
+        `${envLocalPath} already has OPENFGA_STORE_ID — update manually if re-bootstrapping.`,
+      );
     }
   }
 
