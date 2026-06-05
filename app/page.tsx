@@ -1,3 +1,5 @@
+import { PlayCircle } from "lucide-react";
+
 import { Header } from "@/components/core/header";
 import { Footer } from "@/components/core/footer";
 import { Button } from "@/components/ui/button";
@@ -92,6 +94,19 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+        </section>
+
+        {/* Demo Video */}
+        <section className="flex flex-col items-center gap-4">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold">See it in action</h2>
+            <p className="text-sm text-muted-foreground">Full walkthrough of the authentication and authorization flow</p>
+          </div>
+          {/* Replace this div with a <video> or <iframe> when the recording is ready */}
+          <div className="w-full max-w-4xl aspect-video rounded-xl border border-border bg-muted flex flex-col items-center justify-center gap-4 text-muted-foreground">
+            <PlayCircle className="w-16 h-16 opacity-30" />
+            <span className="text-sm">Demo video coming soon</span>
+          </div>
         </section>
 
         {/* Features Grid */}
