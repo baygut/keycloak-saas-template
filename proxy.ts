@@ -24,7 +24,7 @@ const PROACTIVE_REFRESH_SECONDS = 30;
 
 function isProtectedBlogPath(pathname: string): boolean {
   if (pathname === "/blog/new") return true;
-  return /^\/blog\/[^/]+\/edit$/.test(pathname);
+  return /^\/blog\/[^/]+\/(edit|analytics)$/.test(pathname);
 }
 
 function cookieOptions(maxAge: number) {
@@ -225,5 +225,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/blog/new", "/blog/:slug/edit"],
+  matcher: [
+    "/dashboard/:path*",
+    "/blog/new",
+    "/blog/:slug/edit",
+    "/blog/:slug/analytics",
+  ],
 };

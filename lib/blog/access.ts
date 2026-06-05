@@ -1,5 +1,9 @@
 import { BLOG_VISIBILITY } from "@/lib/auth/constants";
-import { getSessionPrincipal, isAdmin } from "@/lib/auth/permissions";
+import {
+  canAccessUserResource,
+  getSessionPrincipal,
+  isAdmin,
+} from "@/lib/auth/permissions";
 import type { SessionUser } from "@/lib/auth/types";
 import {
   canDeleteBlogFga,
@@ -119,6 +123,16 @@ export async function canDeleteBlog(
   }
 
   return canDeleteBlogFga(principal, blog.id);
+}
+
+export function canViewBlogAnalytics(
+  blog: BlogRecord,
+  session: SessionUser,
+): boolean {
+  return (
+    blog.ownerKey === getSessionPrincipal(session) &&
+    canAccessUserResource(session)
+  );
 }
 
 export async function canShareBlog(

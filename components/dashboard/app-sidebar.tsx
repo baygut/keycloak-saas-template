@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   BarChart2,
   FileText,
@@ -12,16 +10,17 @@ import {
   User,
   Users,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { ResourceBadge } from "@/components/auth/resource-badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,

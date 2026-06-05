@@ -45,7 +45,9 @@ export async function getBlogViewCounts(
     _count: { id: true },
   });
 
-  return new Map(rows.map((r) => [r.resourceId!, r._count.id]));
+  return new Map(
+    rows.map((r: GroupByResourceId) => [r.resourceId!, r._count.id] as [string, number]),
+  );
 }
 
 export type TopBlog = { slug: string; title: string; viewCount: number };
@@ -59,6 +61,12 @@ export type AdminAnalytics = {
   dailyViews: DailyView[];
   routeStats: RouteStatRow[];
 };
+
+type RawDailyView = { date: string; count: bigint };
+type RawRouteStats = { path: string; count: bigint; avgMs: number };
+type BlogSelectRow = { id: string; slug: string; title: string };
+type GroupByResourceId = { resourceId: string | null; _count: { id: number } };
+type ViewerKeyRow = { viewerKey: string | null };
 
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {
   const [totalViews, totalBlogs, topBlogsRaw, dailyViewsRaw, routeStatsRaw] =
@@ -75,7 +83,7 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
         take: 5,
       }),
 
-      prisma.$queryRaw<{ date: string; count: bigint }[]>`
+      prisma.$queryRaw<RawDailyView[]>`
         SELECT strftime('%Y-%m-%d', "createdAt") AS date, COUNT(*) AS count
         FROM "AnalyticsEvent"
         WHERE event = 'page_view'
@@ -84,7 +92,7 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
         ORDER BY date ASC
       `,
 
-      prisma.$queryRaw<{ path: string; count: bigint; avgMs: number }[]>`
+      prisma.$queryRaw<RawRouteStats[]>`
         SELECT path, COUNT(*) AS count, AVG("durationMs") AS avgMs
         FROM "AnalyticsEvent"
         WHERE event = 'route_transition' AND path IS NOT NULL
@@ -95,20 +103,22 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
     ]);
 
   const blogIds = topBlogsRaw
-    .map((r) => r.resourceId)
+    .map((r: GroupByResourceId) => r.resourceId)
     .filter(Boolean) as string[];
 
-  const blogs = blogIds.length
+  const blogs: BlogSelectRow[] = blogIds.length
     ? await prisma.blog.findMany({
         where: { id: { in: blogIds } },
         select: { id: true, slug: true, title: true },
       })
     : [];
 
-  const blogMap = new Map(blogs.map((b) => [b.id, b]));
+  const blogMap = new Map<string, BlogSelectRow>(
+    blogs.map((b) => [b.id, b]),
+  );
 
   const topBlogs = topBlogsRaw
-    .map((r) => {
+    .map((r: GroupByResourceId) => {
       const blog = blogMap.get(r.resourceId!);
       return blog
         ? { slug: blog.slug, title: blog.title, viewCount: r._count.id }
@@ -120,11 +130,11 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
     totalViews,
     totalBlogs,
     topBlogs,
-    dailyViews: dailyViewsRaw.map((r) => ({
+    dailyViews: dailyViewsRaw.map((r: RawDailyView) => ({
       date: r.date,
       count: Number(r.count),
     })),
-    routeStats: routeStatsRaw.map((r) => ({
+    routeStats: routeStatsRaw.map((r: RawRouteStats) => ({
       path: r.path,
       count: Number(r.count),
       avgMs: Math.round(r.avgMs ?? 0),
@@ -140,23 +150,26 @@ export type UserAnalytics = {
 export async function getUserAnalytics(
   ownerKey: string,
 ): Promise<UserAnalytics> {
-  const blogs = await prisma.blog.findMany({
+  const blogs: BlogSelectRow[] = await prisma.blog.findMany({
     where: { ownerKey },
     select: { id: true, slug: true, title: true },
   });
 
   if (!blogs.length) return { totalViews: 0, blogs: [] };
 
-  const viewCounts = await getBlogViewCounts(blogs.map((b) => b.id));
+  const viewCounts = await getBlogViewCounts(blogs.map((b: BlogSelectRow) => b.id));
 
-  const blogsWithCounts = blogs.map((b) => ({
+  const blogsWithCounts = blogs.map((b: BlogSelectRow) => ({
     slug: b.slug,
     title: b.title,
     viewCount: viewCounts.get(b.id) ?? 0,
   }));
 
   return {
-    totalViews: blogsWithCounts.reduce((s, b) => s + b.viewCount, 0),
+    totalViews: blogsWithCounts.reduce(
+      (s: number, b: { viewCount: number }) => s + b.viewCount,
+      0,
+    ),
     blogs: blogsWithCounts,
   };
 }
@@ -187,6 +200,51 @@ export async function getRecentOtelSpans(limit = 20): Promise<OtelSpanRow[]> {
   });
 }
 
+export type BlogAnalytics = {
+  totalViews: number;
+  dailyViews: DailyView[];
+  recentViewers: string[];
+};
+
+export async function getBlogAnalytics(blogId: string): Promise<BlogAnalytics> {
+  const [totalViews, dailyViewsRaw, recentViewersRaw] = await Promise.all([
+    prisma.analyticsEvent.count({
+      where: { event: "page_view", resourceId: blogId },
+    }),
+
+    prisma.$queryRaw<RawDailyView[]>`
+      SELECT strftime('%Y-%m-%d', "createdAt") AS date, COUNT(*) AS count
+      FROM "AnalyticsEvent"
+      WHERE event = 'page_view'
+        AND "resourceId" = ${blogId}
+        AND "createdAt" >= datetime('now', '-30 days')
+      GROUP BY strftime('%Y-%m-%d', "createdAt")
+      ORDER BY date ASC
+    `,
+
+    prisma.analyticsEvent.findMany({
+      where: {
+        event: "page_view",
+        resourceId: blogId,
+        viewerKey: { not: null },
+      },
+      orderBy: { createdAt: "desc" },
+      distinct: ["viewerKey"],
+      take: 10,
+      select: { viewerKey: true },
+    }),
+  ]);
+
+  return {
+    totalViews,
+    dailyViews: dailyViewsRaw.map((r: RawDailyView) => ({
+      date: r.date,
+      count: Number(r.count),
+    })),
+    recentViewers: recentViewersRaw.map((r: ViewerKeyRow) => r.viewerKey!),
+  };
+}
+
 export type AnalyticsEventRow = {
   id: string;
   event: string;
@@ -195,6 +253,16 @@ export type AnalyticsEventRow = {
   viewerKey: string | null;
   durationMs: number | null;
   createdAt: string;
+};
+
+type SelectedAnalyticsEvent = {
+  id: string;
+  event: string;
+  path: string | null;
+  resourceType: string | null;
+  viewerKey: string | null;
+  durationMs: number | null;
+  createdAt: Date;
 };
 
 export async function listAnalyticsEventsCursor(options: {
@@ -213,7 +281,7 @@ export async function listAnalyticsEventsCursor(options: {
     createdAt: true,
   } as const;
 
-  let rows: Awaited<ReturnType<typeof prisma.analyticsEvent.findMany<{ select: typeof select }>>>;
+  let rows: SelectedAnalyticsEvent[];
   if (options.cursor) {
     rows = await prisma.analyticsEvent.findMany({
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -234,7 +302,7 @@ export async function listAnalyticsEventsCursor(options: {
   const items = hasNext ? rows.slice(0, take) : rows;
 
   return {
-    events: items.map((r) => ({
+    events: items.map((r: SelectedAnalyticsEvent) => ({
       id: r.id,
       event: r.event,
       path: r.path,

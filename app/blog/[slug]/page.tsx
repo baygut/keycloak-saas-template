@@ -14,7 +14,12 @@ import { VisibilityBadge } from "@/components/blog/visibility-badge";
 import { accessDeniedPanel } from "@/lib/auth/forbidden-response";
 import { getSessionPrincipal } from "@/lib/auth/permissions";
 import { getSession } from "@/lib/auth/server";
-import { canDeleteBlog, canManageBlog, canViewBlog } from "@/lib/blog/access";
+import {
+  canDeleteBlog,
+  canManageBlog,
+  canViewBlog,
+  canViewBlogAnalytics,
+} from "@/lib/blog/access";
 import { getBlogBySlug } from "@/lib/blog/repository";
 import { persistAnalyticsEvent } from "@/lib/analytics/events";
 import { formatDate } from "@/lib/format";
@@ -69,6 +74,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   const canEdit = session ? await canManageBlog(blog, session) : false;
   const canDelete = session ? await canDeleteBlog(blog, session) : false;
+  const canAnalytics = session ? canViewBlogAnalytics(blog, session) : false;
 
   return (
     <div className="container max-w-3xl py-8">
@@ -106,6 +112,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           {canEdit ? (
             <Button variant="ghost" asChild>
               <Link href={`/blog/${blog.slug}/edit`}>Edit</Link>
+            </Button>
+          ) : null}
+          {canAnalytics ? (
+            <Button variant="ghost" asChild>
+              <Link href={`/blog/${blog.slug}/analytics`}>Analytics</Link>
             </Button>
           ) : null}
           {canDelete ? <BlogDeleteButton slug={blog.slug} /> : null}
